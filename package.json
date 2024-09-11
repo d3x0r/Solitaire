@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "description": "JS Solitaire game @d3x0r/solitaire(NPM)",
   "main": "index.html",
+  "dependencies": {
+     "@d3x0r/srg2": "latest",
+     "jsox": "latest",
+     "sack.vfs": "latest"
+  },
   "devDependencies": {},
   "scripts": {
     "run": "node sack.vfs/server",
-    "link": "npm link sack.vfs"
+    "link": "npm link sack.vfs jsox @d3x0r/srg2 @d3x0r/popups"
   },
   "author": "d3x0r",
   "license": "ISC"
