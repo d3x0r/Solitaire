@@ -10,7 +10,7 @@
   },
   "repository":{
      "type":"git",
-     "git+https://github.com/d3x0r/solitaire"
+     "url":"git+https://github.com/d3x0r/solitaire"
   }
   "devDependencies": {},
   "scripts": {
