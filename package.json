@@ -1,0 +1,13 @@
+{
+  "name": "@d3x0r/solitaire",
+  "version": "1.0.0",
+  "description": "JS Solitaire game @d3x0r/solitaire(NPM)",
+  "main": "index.html",
+  "devDependencies": {},
+  "scripts": {
+    "run": "node sack.vfs/server",
+    "link": "npm link sack.vfs"
+  },
+  "author": "d3x0r",
+  "license": "ISC"
+}
