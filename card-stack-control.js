@@ -1,5 +1,13 @@
 import * as cards from "./cards.js"
-import cardImages from "./images/cards/cardset2.jsox"
+
+
+//import cardImages from "./images/cards/cardset2.jsox"
+
+import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
+let cardImages;
+await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+
+
 import {getImage} from "./node_modules/sack.vfs/apps/http-ws/imageLoader.js"
 import {Fraction} from "./node_modules/sack.vfs/apps/fractions/fractions.mjs"
 import {card_game} from "./card_game.js"
