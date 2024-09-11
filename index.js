@@ -1,7 +1,7 @@
 
 
 import {setup} from "./klondike.js";
-import {popups} from "/node_modules/@d3x0r/popups/popups.mjs";
+import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
 
 const pages = new popups.PagedFrame( document.querySelector( "#game1" ) );
 popups.utils.preAddPopupStyles( document.head )

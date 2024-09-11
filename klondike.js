@@ -1,7 +1,7 @@
 
 import {klondike_board,klondike3_board} from "./solitaire-rules.js";
 import {card_stack_control} from "./card-stack-control.js"
-import {popups} from "/node_modules/@d3x0r/popups/popups.mjs";
+import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
 
 import {card_game} from "./card_game.js"
 import {getStandardDeck} from "./cards.js";

@@ -1,4 +1,4 @@
-import {SaltyRNG} from "/node_modules/@d3x0r/srg2/salty_random_generator2.mjs";
+import {SaltyRNG} from "./node_modules/@d3x0r/srg2/salty_random_generator2.mjs";
 import {getStandardDeck} from "./cards.js";
 
 // this is sort of a binding point between logical game structures

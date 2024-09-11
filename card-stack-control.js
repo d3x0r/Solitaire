@@ -1,7 +1,7 @@
 import * as cards from "./cards.js"
 import cardImages from "./images/cards/cardset2.jsox"
-import {getImage} from "/node_modules/sack.vfs/apps/http-ws/imageLoader.js"
-import {Fraction} from "/node_modules/sack.vfs/apps/fractions/fractions.mjs"
+import {getImage} from "./node_modules/sack.vfs/apps/http-ws/imageLoader.js"
+import {Fraction} from "./node_modules/sack.vfs/apps/fractions/fractions.mjs"
 import {card_game} from "./card_game.js"
 const card_images = await Promise.all( cardImages.map( async (card) => {return getImage( card)}))
 function Color(r,g,b) { return [r,g,b] }
