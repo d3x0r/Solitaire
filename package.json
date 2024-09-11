@@ -1,6 +1,6 @@
 {
   "name": "@d3x0r/solitaire",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JS Solitaire game @d3x0r/solitaire(NPM)",
   "main": "index.html",
   "dependencies": {
@@ -8,6 +8,10 @@
      "jsox": "latest",
      "sack.vfs": "latest"
   },
+  "repository":{
+     "type":"git",
+     "git+https://github.com/d3x0r/solitaire"
+  }
   "devDependencies": {},
   "scripts": {
     "run": "node sack.vfs/server",
