@@ -1,8 +1,8 @@
 import * as cards from "./cards.js"
-
+const msg = window.msg;
 
 import cardImages from "./images/cards/cardset2.jsox"
-
+import { card_drag_control } from "./card-drag-control.js";
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
 
 //let cardImages;
@@ -150,6 +150,9 @@ export class card_stack_control {
 	my = 0; // mousey
 	top = 0;
 	left = 0;
+	tx = 0;
+	ty = 0;
+	touches = [];
 
 	frame = document.createElement ("div" );
 	canvas = document.createElement ("canvas" );
@@ -167,6 +170,12 @@ export class card_stack_control {
 		// at this point could pretend do to do some setup of the position?
 		// this is setting information about the canavas (Surface/output image) and cards (images)
 		this.SetStackCards();
+
+		this.canvas.addEventListener( "touchstart", (evt)=>this.touch( "start", evt ) );
+		this.canvas.addEventListener( "touchend", (evt)=>this.touch( "end", evt ) );
+		this.canvas.addEventListener( "touchcancel", (evt)=>this.touch( "cancel", evt ) );
+		this.canvas.addEventListener( "touchmove", (evt)=>this.touch( "move", evt ) );
+
 
 		this.canvas.addEventListener( "mousedown", (evt)=>this.mouse( "down", evt ) );
 		this.canvas.addEventListener( "mouseup", (evt)=>this.mouse( "up", evt ) );
@@ -221,6 +230,104 @@ export class card_stack_control {
 		this.#max_id = val.faces * val.suits;
 	}
 
+	touch( type, e ) {
+		switch( type ) {
+			case "start":
+			e.preventDefault();
+			for( let touch of e.changedTouches ){
+				const old = this.touches.find( (t)=> t.ID === touch.identifier );
+				if( old ) {
+					old.x = touch.clientX - this.canvas.offsetLeft;
+					old.y = touch.clientY - this.canvas.offsetTop;
+					old.new = true;
+				} else {
+					this.touches.push( {ID:touch.identifier,
+						x : touch.clientX - this.canvas.offsetLeft,
+						y : touch.clientY - this.canvas.offsetTop,
+						new : true
+					})
+				}
+			}
+			break;
+		case "cancel":{
+			console.log ( "Fell out?" );
+			break;
+		}
+		case "move":{
+			e.preventDefault();
+			//console.log ( "Move touch..." + this.touches.length );
+			for( let touchChanged of e.changedTouches ){
+			  var touch = this.touches.find( (t)=> t.ID === touchChanged.identifier );
+			  if( touch ) {
+				touch.x = touchChanged.clientX- this.canvas.offsetLeft;
+				touch.y = touchChanged.clientY- this.canvas.offsetTop;
+			  }
+			  //console.log( "Move touch...(oh can't see this" );
+			}
+		}
+		  break;
+		  
+		  case "end": {
+			e.preventDefault();
+			for( let touchChanged of e.changedTouches ){
+			  var touchIndex = this.touches.findIndex( (t)=> t.ID === touchChanged.identifier );
+			  if( touchIndex >= 0 ){
+				this.touchx = this.touches[touchIndex].x;
+				this.touchy = this.touches[touchIndex].y;
+			  	this.touches.splice( touchIndex, 1 )
+				}
+				//else console.log( "A touch ended that never started?" );
+			}
+			if( this.active.nCardsSelected ) {	
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 0 );
+				this.#dragControl._b = 0;
+
+			}
+		  }
+		  break;
+		}
+		this.touchUpdate();
+	}
+
+	touchUpdate() {
+		if( this.touches.length == 1 ){
+		  var t = this.touches[0];
+		  //console.log ( "Touch at " + t.x + "," + t.y );
+		  if( t.new )
+		  {
+			this._b = 0;//this.b;
+			this.b = 1;
+			this.touchx = t.x;
+			this.touchy = t.y;
+			card_stack_control.mouse( this, this.touchx, this.touchy, this.b );
+			//rotateStart.set( t.x, t.y );
+			t.new = false;
+		  }
+		  else {
+			this._b = this.b;
+			this.b = 1;
+			this.touchx = t.x;
+			this.touchy = t.y;
+			card_stack_control.mouse( this, this.touchx, this.touchy, this.b );
+			if( this.active.nCardsSelected ) {
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 1 );
+				this.#dragControl._b = 1;
+			}
+		  }
+		}
+		else {
+			this._b = this.b;
+			this.b = 0;
+			card_stack_control.mouse( this, this.touchx, this.touchy, this.b );
+			if( this.active.nCardsSelected ) {	
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 0 );
+				this.#dragControl._b = 0;
+			}
+		}
+	}
+	  
+
+
 	mouse( type, evt ) {
 		let x = evt.clientX - this.canvas.offsetLeft;
 		let y = evt.clientY - this.canvas.offsetTop;
@@ -230,42 +337,15 @@ export class card_stack_control {
 
 		//if( type != "move" );
 		//	console.log( "handle event:", type, x, y, evt.buttons );
-		this.b = evt.buttons;
 		if( type == "down" ) {
 			this.b = evt.buttons;
+			//console.log( "down", this.b );
 		}
 		if( type == "up" ) {
 			this.b = evt.buttons;
+			//console.log( "up", this.b );
 		}
 		card_stack_control.mouse( this, x, y, this.b );
-		if( this.#dragControl && this.active.nCardsSelected ) {
-
-			const stackRect = this.canvas.getBoundingClientRect();
-			let cx = stackRect.left;
-			let cy = stackRect.top;
-			const cards = this.stack.cards;
-			const cstack = [];
-			for( let card = cards; card; card = card.next ){
-				if( !card.next ) {
-					for( let c = card; c; c = (c.me.ref != this.stack)?c.me.ref:null  ) {
-						if( !c.flags.bFaceDown ){
-							cstack.push( c );
-						}
-					}
-					break;
-				}
-			}
-			let xs = 0;
-			let ys = 0;
-			if( this.flags.bVertical )
-			   ys = this.step_y * this.canvas.height / 100;
-			if( this.flags.bHorizontal )
-			   xs = this.step_x * this.canvas.width / 100;
-			if( !(this._b&1) && (this.b&1) )
-				this.#dragControl.select( this
-							, cstack.slice( cstack.length-this.active.nCardsSelected )
-							, cx + cstack.length * this.scaled_step_x, cy + cstack.length * this.scaled_step_y, x - (cstack.length-this.active.nCardsSelected) * xs, y - (cstack.length-this.active.nCardsSelected) * ys );
-		}
 	}
 
 	static update( stack )  {
@@ -785,7 +865,7 @@ export class card_stack_control {
 		// what can I do with a mouse?
 		// I can drraw on a frame... I don't need to be a control...
 		if( !stack.game ) return;
-
+		//console.log( "Static mouse event:", stack.stack.name, x, y, b );
 		if( ( b & 1 ) && !( stack._b & 1 ) )
 		{
 			const card_stack = stack.stack;
@@ -843,6 +923,40 @@ export class card_stack_control {
 					stack.SelectCards( count );
 			}
 	
+		}
+		//console.log ( "static mouse event?" + stack.active.nCardsSelected );
+		
+		if( stack.#dragControl && stack.active.nCardsSelected ) {
+
+			const stackRect = stack.canvas.getBoundingClientRect();
+			let cx = stackRect.left;
+			let cy = stackRect.top;
+			const cards = stack.stack.cards;
+			const cstack = [];
+			for( let card = cards; card; card = card.next ){
+				if( !card.next ) {
+					for( let c = card; c; c = (c.me.ref != stack.stack)?c.me.ref:null  ) {
+						if( !c.flags.bFaceDown ){
+							cstack.push( c );
+						}
+					}
+					break;
+				}
+			}
+			let xs = 0;
+			let ys = 0;
+			if( stack.flags.bVertical )
+			   ys = stack.step_y * stack.canvas.height / 100;
+			if( stack.flags.bHorizontal )
+			   xs = stack.step_x * stack.canvas.width / 100;
+			   //console.log( "button states are: " + b + " " + stack._b + " " + stack.b );
+
+			if( !(stack._b&1) && (stack.b&1) ) {
+				//console.log ( "selected to drag layer at " + x + "," + y );
+				stack.#dragControl.select( stack
+							, cstack.slice( cstack.length-stack.active.nCardsSelected )
+							, cx + cstack.length * stack.scaled_step_x, cy + cstack.length * stack.scaled_step_y, x - (cstack.length-stack.active.nCardsSelected) * xs, y - (cstack.length-stack.active.nCardsSelected) * ys );
+			}
 		}
 		//stack._b = b;
 		return 1;
