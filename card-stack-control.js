@@ -1,12 +1,11 @@
 import * as cards from "./cards.js"
 const msg = window.msg;
 
-import cardImages from "./images/cards/cardset2.jsox"
 import { card_drag_control } from "./card-drag-control.js";
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
 
-//let cardImages;
-//await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+let cardImages;
+await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
 
 //import cardImages from "./images/cards/cardset2.jsox"
 
