@@ -1,12 +1,12 @@
 import * as cards from "./cards.js"
 
 
-//import cardImages from "./images/cards/cardset2.jsox"
+import cardImages from "./images/cards/cardset2.jsox"
 
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
 
-let cardImages;
-await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+//let cardImages;
+//await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
 
 //import cardImages from "./images/cards/cardset2.jsox"
 
@@ -255,10 +255,16 @@ export class card_stack_control {
 					break;
 				}
 			}
+			let xs = 0;
+			let ys = 0;
+			if( this.flags.bVertical )
+			   ys = this.step_y * this.canvas.height / 100;
+			if( this.flags.bHorizontal )
+			   xs = this.step_x * this.canvas.width / 100;
 			if( !(this._b&1) && (this.b&1) )
 				this.#dragControl.select( this
 							, cstack.slice( cstack.length-this.active.nCardsSelected )
-							, cx + cstack.length * this.scaled_step_x, cy + cstack.length * this.scaled_step_y, x, y );
+							, cx + cstack.length * this.scaled_step_x, cy + cstack.length * this.scaled_step_y, x - (cstack.length-this.active.nCardsSelected) * xs, y - (cstack.length-this.active.nCardsSelected) * ys );
 		}
 	}
 
