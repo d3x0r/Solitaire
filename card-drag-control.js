@@ -45,6 +45,7 @@ export class card_drag_control {
 
 				this.canvas.width = width;
 				this.canvas.height = height;
+				this.draw();
 				//console.log( "at least one resize/", rect );	
 			}
 		  });

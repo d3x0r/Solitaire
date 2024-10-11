@@ -199,6 +199,7 @@ export class card_stack_control {
 				this.canvas.height = height;
 				this.top = realRect.top;
 				this.left = realRect.left;
+				this.draw();
 				//console.log( "at least one resize/", rect );	
 			}
 		  });
