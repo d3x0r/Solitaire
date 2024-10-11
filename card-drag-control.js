@@ -138,9 +138,11 @@ export class card_drag_control {
 		this.mx = x;
 		this.my = y;
 		if( type == "down" ) {
+			this._b = 0;
 			this.b = evt.buttons;
 		}
 		if( type == "up" ) {
+			this._b = 1;
 			this.b = evt.buttons;
 		}
 		card_drag_control.mouse( this, x, y, this.b );
