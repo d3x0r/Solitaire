@@ -139,9 +139,9 @@ export class card_drag_control {
 		let xs = 0;
 		let ys = 0;
 		if( this.stack.flags.bVertical )
-		   ys = this.stack.step_y * this.canvas.height / 100;
+		   ys = this.stack.step_y * this.stack.canvas.height / 100;
 		if( this.stack.flags.bHorizontal )
-		   xs = this.stack.step_x * this.canvas.width / 100;
+		   xs = this.stack.step_x * this.stack.canvas.width / 100;
 		const cimg = card_images_selected;
 		for( let card of this.cards ) {
 			if( !card.flags.bFaceDown) {

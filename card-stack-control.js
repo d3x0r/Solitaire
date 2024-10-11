@@ -4,7 +4,11 @@ import * as cards from "./cards.js"
 //import cardImages from "./images/cards/cardset2.jsox"
 
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
-import cardImages from "./images/cards/cardset2.jsox"
+
+let cardImages;
+await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+
+//import cardImages from "./images/cards/cardset2.jsox"
 
 
 import {getImage} from "./node_modules/sack.vfs/apps/http-ws/imageLoader.js"
@@ -244,7 +248,9 @@ export class card_stack_control {
 			for( let card = cards; card; card = card.next ){
 				if( !card.next ) {
 					for( let c = card; c; c = (c.me.ref != this.stack)?c.me.ref:null  ) {
-						cstack.push( c );
+						if( !c.flags.bFaceDown ){
+							cstack.push( c );
+						}
 					}
 					break;
 				}
@@ -252,7 +258,7 @@ export class card_stack_control {
 			if( !(this._b&1) && (this.b&1) )
 				this.#dragControl.select( this
 							, cstack.slice( cstack.length-this.active.nCardsSelected )
-							, cx, cy, x, y );
+							, cx + cstack.length * this.scaled_step_x, cy + cstack.length * this.scaled_step_y, x, y );
 		}
 	}
 
@@ -451,7 +457,7 @@ export class card_stack_control {
 		stack.image_height = control_h;
 		stack.card_height = control_w * 1.5;
 
-		stack.scaled_step_x = this.step_y * this.canvas.width/( this.card_width  ) / 100
+		stack.scaled_step_x = this.step_x * this.canvas.width/( this.card_width  ) / 100
 		stack.scaled_step_y = this.step_y * this.canvas.height/( ( this.card_height * this.step_y/100 ) ) / 100
 	}
 
