@@ -22,9 +22,9 @@ const card_images = await Promise.all( cardImages.map( async (card) => {return g
 function Color(r,g,b) { return [r,g,b] }
 const converter = document.createElement("canvas");
 const converterCtx = converter.getContext("2d", {willReadFrequently :true});
-export const card_images_selected = card_images.map( (img)=>processImage( img,  Color( 0, 255, 0 )
-																	, Color( 128, 0, 0 )
-																	, Color( 0, 0, 255 ) )
+export const card_images_selected = card_images.map( (img)=>processImage( img,  Color( 255, 0, 0 )
+																	, Color( 0, 128, 0 )
+																	, Color( 64, 64, 192 ) )
 )
 
 
