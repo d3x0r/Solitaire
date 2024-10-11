@@ -4,8 +4,7 @@ import * as cards from "./cards.js"
 //import cardImages from "./images/cards/cardset2.jsox"
 
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
-let cardImages;
-await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+import cardImages from "./images/cards/cardset2.jsox"
 
 
 import {getImage} from "./node_modules/sack.vfs/apps/http-ws/imageLoader.js"
@@ -15,7 +14,7 @@ const card_images = await Promise.all( cardImages.map( async (card) => {return g
 function Color(r,g,b) { return [r,g,b] }
 const converter = document.createElement("canvas");
 const converterCtx = converter.getContext("2d", {willReadFrequently :true});
-const card_images_selected = card_images.map( (img)=>processImage( img,  Color( 0, 255, 0 )
+export const card_images_selected = card_images.map( (img)=>processImage( img,  Color( 0, 255, 0 )
 																	, Color( 128, 0, 0 )
 																	, Color( 0, 0, 255 ) )
 )
@@ -58,6 +57,8 @@ function processImage( image, r,g,b ) {
 
 export class card_stack_control {
 	#deck = null;
+	#dragControl = null;
+
 	flags = {
 		bVertical : false,
 		bReversed : false,
@@ -143,7 +144,8 @@ export class card_stack_control {
 	b = 0; // current button state on this control
 	mx = 0; // mousex
 	my = 0; // mousey
-
+	top = 0;
+	left = 0;
 
 	frame = document.createElement ("div" );
 	canvas = document.createElement ("canvas" );
@@ -169,7 +171,28 @@ export class card_stack_control {
 		this.canvas.addEventListener( "mouseover", (evt)=>this.mouse( "over", evt ) );
 		//this.canvas.addEventListener( "click", (evt)=>this.mouse( "click", evt ) );
 		//this.canvas.addEventListener( "dblclick", (evt)=>this.mouse( "dblclick", evt ) );
+		const resizeObserver = new ResizeObserver(entries => {
+			for (let entry of entries) {
+			  const { width, height } = entry.contentRect;
+			  //console.log('Size changed:', width, height);
+			  if( !width || !height ) return;
 
+				const realRect = entry.target.getBoundingClientRect();
+				this.canvas.width = width;
+				this.canvas.height = height;
+				this.top = realRect.top;
+				this.left = realRect.left;
+				//console.log( "at least one resize/", rect );	
+			}
+		  });
+		  
+		  resizeObserver.observe(this.canvas);
+
+	}
+
+	set dragControl( val ) {
+		this.#dragControl = val;
+		val.add(this);
 	}
 
 	set deck( val ) {
@@ -203,6 +226,7 @@ export class card_stack_control {
 
 		//if( type != "move" );
 		//	console.log( "handle event:", type, x, y, evt.buttons );
+		this.b = evt.buttons;
 		if( type == "down" ) {
 			this.b = evt.buttons;
 		}
@@ -210,7 +234,26 @@ export class card_stack_control {
 			this.b = evt.buttons;
 		}
 		card_stack_control.mouse( this, x, y, this.b );
+		if( this.#dragControl && this.active.nCardsSelected ) {
 
+			const stackRect = this.canvas.getBoundingClientRect();
+			let cx = stackRect.left;
+			let cy = stackRect.top;
+			const cards = this.stack.cards;
+			const cstack = [];
+			for( let card = cards; card; card = card.next ){
+				if( !card.next ) {
+					for( let c = card; c; c = (c.me.ref != this.stack)?c.me.ref:null  ) {
+						cstack.push( c );
+					}
+					break;
+				}
+			}
+			if( !(this._b&1) && (this.b&1) )
+				this.#dragControl.select( this
+							, cstack.slice( cstack.length-this.active.nCardsSelected )
+							, cx, cy, x, y );
+		}
 	}
 
 	static update( stack )  {
@@ -406,6 +449,7 @@ export class card_stack_control {
 		
 		stack.image_width = control_w;
 		stack.image_height = control_h;
+		stack.card_height = control_w * 1.5;
 
 		stack.scaled_step_x = this.step_y * this.canvas.width/( this.card_width  ) / 100
 		stack.scaled_step_y = this.step_y * this.canvas.height/( ( this.card_height * this.step_y/100 ) ) / 100
@@ -542,6 +586,7 @@ export class card_stack_control {
 
 				}while( thinking );
 				stack.active.nCardsSelected = count;
+
 			}
 			this.draw();
 		}
@@ -734,7 +779,7 @@ export class card_stack_control {
 			const card_stack = stack.stack;
 			if( !card_stack.cards && card_stack.name === "Draw") {
 				card_stack.out_of_cards();
-				stack._b = b;
+				//stack._b = b;
 				return 1;
 			}
 			
@@ -787,7 +832,7 @@ export class card_stack_control {
 			}
 	
 		}
-		stack._b = b;
+		//stack._b = b;
 		return 1;
 	}
 	

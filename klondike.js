@@ -1,6 +1,6 @@
 
 import {klondike_board,klondike3_board} from "./solitaire-rules.js";
-import {card_stack_control} from "./card-stack-control.js"
+import {card_drag_control} from "./card-drag-control.js"
 import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
 
 import {card_game} from "./card_game.js"
@@ -16,16 +16,17 @@ export function setup( parent, options ) {
 	let deck = getStandardDeck( useBoard.name );
 	const stacks = [];
 	const fill = parent.querySelector( "#klondike-game" );
+	const dragControl = new card_drag_control( parent );
 	// use useBoard.name 
 	for( let stackName of Object.keys( useBoard ) ){
 		if( stackName === "name" ) continue;
 		const stack = useBoard[stackName];
 		// this is magic.
+		stack.dragControl = dragControl;
 		stack.deck = deck;
 		stack.append( fill );
 		stacks.push( stack );
 	}
-
 	card_game.makeGame( useBoard.name, deck );
 
 	popups.makeButton( fill, "New Game", () => {
@@ -62,5 +63,5 @@ export function setup( parent, options ) {
 		}
 		dealtTo.forEach( stack => {stack.draw()})
 
-	});
+	}, {suffix:"new-game"} );
 }
