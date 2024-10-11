@@ -5,7 +5,12 @@ import { card_drag_control } from "./card-drag-control.js";
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
 
 let cardImages;
-await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( (data) => {cardImages = data} );
+await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( async (data) => {
+	if( data === "import" ){
+		data = (await import( "./images/cards/cardset2.jsox" )).default;
+	}
+	cardImages = data
+} );
 
 //import cardImages from "./images/cards/cardset2.jsox"
 
@@ -337,10 +342,12 @@ export class card_stack_control {
 		//if( type != "move" );
 		//	console.log( "handle event:", type, x, y, evt.buttons );
 		if( type == "down" ) {
+			this._b = 0;
 			this.b = evt.buttons;
 			//console.log( "down", this.b );
 		}
 		if( type == "up" ) {
+			this._b = 1;
 			this.b = evt.buttons;
 			//console.log( "up", this.b );
 		}
