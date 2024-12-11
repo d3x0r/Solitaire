@@ -3,6 +3,7 @@ const msg = window.msg;
 
 import { card_drag_control } from "./card-drag-control.js";
 import {JSOX} from "./node_modules/jsox/lib/jsox.mjs"
+import {popups} from "/node_modules/@d3x0r/popups/popups.mjs"
 
 let cardImages;
 await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return JSOX.parse( await response.text() ) } ).then( async (data) => {
@@ -127,8 +128,12 @@ export class card_stack_control {
 
 	step_x = 0;
 	step_y = 0;
+	fd_step_x = 0;
+	fd_step_y = 0;
 	scaled_step_x = 0;
 	scaled_step_y = 0;
+	scaled_fd_step_x = 0;
+	scaled_fd_step_y = 0;
 	//how many rows and cols can fit... 
 	// step_x and step_y are the percentage of the control width/height that a card is offset.
 	// 2,2 is 1A + step_x*A
@@ -166,7 +171,7 @@ export class card_stack_control {
 		Object.assign( this.flags, options.flags );
 		Object.assign( this.startup, options.startup );
 		Object.assign( this.active, options.active );
-		[ 'deck_stack','step_x','step_y'
+		[ 'deck_stack','step_x','step_y','fd_step_x','fd_step_y'
 		  , 'x','y'
 		  , 'width','height'].forEach( (key) => {
 			this[key] = options[key];	
@@ -223,6 +228,20 @@ export class card_stack_control {
 		const discard = this.#deck.getStack( "Discard" );
 		if( this.deck_stack === "Draw" ) {
 			this.stack.addOutOfCards( ()=>{
+				val.deals++;
+				if( this.flags.bTurn3ToDiscard ) {
+					if( val.deals >= 3 ) {
+						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{}, ()=>{}, {} );
+						n.show();
+						console.log( "LOSE!" );
+					}
+				} else if( this.flags.bTurnToDiscard ) {
+					if( val.deals >= 1 ) {
+						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{}, ()=>{}, {} );
+						n.show();
+						console.log( "LOSE!" );
+					}
+				}
 				while( discard.cards ) {
 					this.stack.add( discard.cards.grab().faceDown() );
 				}
@@ -368,10 +387,16 @@ export class card_stack_control {
 		let x = 0;
 		let xs = 0;
 		let ys = 0;
-		if( this.flags.bVertical )
+		let xs_fd = 0;
+		let ys_fd = 0;
+		if( this.flags.bVertical ) {
 		   ys = this.step_y * this.canvas.height / 100;
-		if( this.flags.bHorizontal )
+		   ys_fd = this.fd_step_y * this.card_height / 100;
+		}
+		if( this.flags.bHorizontal ) {
 		   xs = this.step_x * this.canvas.width / 100;
+		   xs_fd = this.fd_step_x * this.card_width / 100;
+		}
 		const cards = this.stack.cards;
 		const cstack = [];
 		for( let card = cards; card; card = card.next ){
@@ -388,9 +413,11 @@ export class card_stack_control {
 
 			const cimg = ( this.active.nCardsSelected > nsel )?card_images_selected:card_images;
 
-			if( card.flags.bFaceDown)
-				this.ctx.drawImage( cimg[52], x, y, this.canvas.width, this.canvas.width * 1.5  );
-			else {
+			if( card.flags.bFaceDown) {
+				this.ctx.drawImage( cimg[card_images.length-1], x, y, this.canvas.width, this.canvas.width * 1.5  );
+				y += ys_fd;
+				x += xs_fd;
+			} else {
 				this.ctx.drawImage( cimg[card.id], x, y, this.canvas.width, this.canvas.width * 1.5 );
 				y += ys;
 				x += xs;
@@ -414,6 +441,8 @@ export class card_stack_control {
 				let col = 0;
 				let step_width = (((stack.step_x<0)?-stack.step_x:stack.step_x) * stack.width ) / 100;
 				let step_height = (((stack.step_y<0)?-stack.step_y:stack.step_y) * stack.height ) / 100;
+				let fd_step_width = (((stack.step_x<0)?-stack.fd_step_x:stack.fd_step_x) * stack.width ) / 100;
+				let fd_step_height = (((stack.step_y<0)?-stack.fd_step_y:stack.fd_step_y) * stack.height ) / 100;
 				let scaled_step_width = (stack.scaled_step_x<0)?-stack.scaled_step_x:stack.scaled_step_x;
 				let scaled_step_height = (stack.scaled_step_y<0)?-stack.scaled_step_y:stack.scaled_step_y;
 				let x = (this.canvas.width) - stack.real_width;
@@ -451,18 +480,18 @@ export class card_stack_control {
 							{
 								this.ctx.drawImage( card_image
 									, 0, 0, step_width, s_height
-									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, scaled_step_width, stack.real_height
+									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, stack.scaled_step_width, stack.real_height
 									);
 							}
 							else if( !col && row )
 								this.ctx.drawImage( card_image
 									, 0, 0, s_width, step_height
-									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, stack.real_width, scaled_step_height
+									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, stack.real_width, stack.scaled_step_height
 									);
 							else if( col && row )
 								this.ctx.drawImage( card_image
 									, 0, 0, step_width, step_height
-									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, scaled_step_width, scaled_step_height
+									, x + col * stack.scaled_step_x, y + row * stack.scaled_step_y, scaled_step_width, stack.scaled_step_height
 									);
 						}
 					}
@@ -550,8 +579,10 @@ export class card_stack_control {
 		stack.image_height = control_h;
 		stack.card_height = control_w * 1.5;
 
-		stack.scaled_step_x = this.step_x * this.canvas.width/( this.card_width  ) / 100
+		stack.scaled_step_x = this.step_x * this.canvas.width/( this.card_width * this.step_x/100 ) / 100
 		stack.scaled_step_y = this.step_y * this.canvas.height/( ( this.card_height * this.step_y/100 ) ) / 100
+		stack.scaled_fd_step_x = this.card_width * this.fd_step_x/100
+		stack.scaled_fd_step_y = this.card_height * this.fd_step_y/100 
 	}
 
 
@@ -904,19 +935,34 @@ export class card_stack_control {
 				let cols = 7; // short-rows didn't work?
 				const scaled_step_width = stack.step_x * stack.canvas.width / 100;
 				const scaled_step_height = stack.step_y * stack.canvas.height / 100;
+				const scaled_fd_step_width = stack.fd_step_x * stack.card_width / 100;
+				const scaled_fd_step_height = stack.fd_step_y * stack.card_height / 100;
+				let fd_skip_y = 0;
+				let fd_skip_x = 0;
+
 				
 				let card = stack.stack.cards;
 				let count = 0;
 				for( ; card; card = card.next ){
 					if( card.flags.bFaceDown ) {
+						fd_skip_y += scaled_fd_step_height;
+						fd_skip_x += scaled_fd_step_width;
+					}
+				}
+
+				
+				card = stack.stack.cards;
+				count = 0;
+				for( ; card; card = card.next ){
+					if( card.flags.bFaceDown ) {
 						continue; // can't select face down cards
 					}
 					count++;
-					if( y < (count*scaled_step_height)) {
+					if( y < (count*scaled_step_height+fd_skip_y)) {
 						break;
 					}
 				}
-				if( y > ((count-1)*scaled_step_height+(stack.canvas.width * 1.5*0.5))) {
+				if( y > ((count-1)*scaled_step_height+(stack.canvas.width * 1.5*0.5)+fd_skip_y)) {
 					count = 1;
 				}
 

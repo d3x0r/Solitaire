@@ -311,6 +311,7 @@ class Deck {
 	stacks = [];
 	handIterator = null;
 	config = null;
+	deals = 0;
 	constructor( name, config ) {
 		this.name = name;
 		this.config = config || {

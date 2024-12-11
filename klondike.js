@@ -38,7 +38,7 @@ export function setup( parent, options ) {
 		}
 		deck.gather();
 		deck.shuffle();
-
+		deck.deals = 0;
 		let c = 0;
 		let isDealing = true;
 		let dealtTo = [];
