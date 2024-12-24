@@ -1,7 +1,9 @@
-import { card_images_selected, card_stack_control} from "./card-stack-control.js";
+import {Events} from "/node_modules/sack.vfs/apps/events/events.mjs"
+
+import { card_images, card_images_selected, card_stack_control} from "./card-stack-control.js";
 const msg = window.msg;
 
-export class card_drag_control {
+export class card_drag_control extends Events {
 
 	frame = document.createElement ("div" );
 	canvas = document.createElement ("canvas" );
@@ -20,7 +22,15 @@ export class card_drag_control {
 	stacks = [];
 	touches = [];
 
+	lastTick = 0;
+	thisTick = 0;
+	startOfs = 0;
+	
+	moving = [];
+	turning = [];
+
 	constructor( parent ) {
+		super();
 		this.frame.className = "card-drag-frame";
 		this.canvas.className = "card-drag-control";
 		parent.appendChild( this.frame );
@@ -56,6 +66,42 @@ export class card_drag_control {
 
 	add( stack ) {
 		this.stacks.push( stack );
+		stack.stack.on( "deal", (from,to,card)=>{
+			if( this.lastTick != this.thisTick ) {
+				this.thisTick = this.lastTick;
+				this.startOfs = 0;
+			}
+			to.control.updateCards();
+			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
+			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
+			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			
+			this.startOfs += 0.025;
+		} );
+		stack.stack.on( "play", (from,to,card)=>{
+			if( this.lastTick != this.thisTick ) {
+				this.thisTick = this.lastTick;
+				this.startOfs = 0;
+			}
+			to.control.updateCards();
+			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
+			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
+			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			this.startOfs += 0.025;
+		} );
+		stack.stack.on( "move", (from,to,card)=>{
+			// card is already in new stack.
+			// card.lastStack should be === from
+			if( this.lastTick != this.thisTick ) {
+				this.thisTick = this.lastTick;
+				this.startOfs = 0;
+			}
+			to.control.updateCards();
+			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
+			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
+			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			this.startOfs += 0.025;
+		} );
 	}
 
 	touch( type, e ) {
@@ -98,6 +144,28 @@ export class card_drag_control {
 		  }
 		}
 		this.touchUpdate();
+	}
+
+	addTurn( card, start, end ) {
+		//end = end * 10;
+		if( this.lastTick != this.thisTick ) {
+			this.thisTick = this.lastTick;
+			this.startOfs = 0;
+		}
+
+		this.turning.push( {card,start:this.startOfs + performance.now()/1000+start,end:this.startOfs + performance.now()/1000+end} );
+		card.flags.bFloating = true;
+
+		if( this.turning.length +this.moving.length === 1 )
+			requestAnimationFrame( (a)=>this.animate(a) );
+		this.startOfs += 0.025;
+	}
+
+	addMove( from, to, start, end, card ) {
+		this.moving.push( {card,start, end, from,to} );
+		card.flags.bFloating = true;  // table draw code shouldn't draw this until it gets to the target...
+		if( this.turning.length +this.moving.length === 1 )
+			requestAnimationFrame( (a)=>this.animate(a) );
 	}
 
 	touchUpdate() {
@@ -217,8 +285,9 @@ export class card_drag_control {
 		this.cardy += y;
 	}
 
-	draw() {
+	draw(noClear) {
 		//this.SetStackCards();
+		if( !noClear )
 		this.ctx.clearRect( 0, 0, this.canvas.width, this.canvas.height );
 		if( !this.cards ) return;
 		this.ctx.fillStyle = "rgba( 0, 0, 0, 0.5 )";
@@ -234,13 +303,113 @@ export class card_drag_control {
 		const cimg = card_images_selected;
 		for( let card of this.cards ) {
 			if( !card.flags.bFaceDown) {
-				this.ctx.drawImage( cimg[card.id], cx, cy, this.stack.image_width, this.stack.image_width*1.5 );
+				this.ctx.drawImage( cimg[card.id]
+								, card.at.x, card.at.y
+									//, cx, cy
+									, this.stack.image_width, this.stack.image_width*1.5 );
 				cy += ys;
 				cx += xs;
 			}else
-				this.ctx.drawImage( cimg[52], cx, cy, this.stack.image_width, this.stack.image_width * 1.5  );
+				this.ctx.drawImage( cimg[52], card.at.x, card.at.y
+									//, cx, cy
+					            , this.stack.image_width, this.stack.image_width * 1.5  );
 
 
 		}
 	}
+
+	animate(a) {
+		const ms = a/1000;
+		if( !this.lastTick ) this.lastTick = ms - 10;
+		
+		const del = ms - this.lastTick;
+
+
+		this.ctx.clearRect( 0, 0, this.canvas.width, this.canvas.height );
+
+		//console.log( "Tick?", a );
+		for( let idx = 0;idx < this.turning.length; idx++ )  {
+			const turn = this.turning[idx];
+			const cimg = card_images;
+			const w = (turn.card.thisStack.control.image_width);
+			const h = (turn.card.thisStack.control.image_width)*1.5;
+			if( turn.end < ms ) {
+				turn.card.flags.bFloating = false;
+				this.on( "land", turn.card );
+				turn.card.thisStack.control.draw();
+				this.turning.splice( idx, 1 );
+			} else if( turn.start < ms ){
+				const cardDel = (ms - turn.start)/(turn.end-turn.start);
+				if( cardDel > 0.5 ) {
+					const show = (cardDel - 0.5)*2;
+					//console.log( "Fliped, showing front now... ", show, cardDel, turn.card.flags.bFaceDown?52:turn.card.id )
+					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
+						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
+						, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
+							+ (h/2)*(1-show)
+						, w
+						, h*show );
+
+				} else {
+					const show = (cardDel)*2;
+					//console.log( "Flip show: (showing back?)", show, cardDel, turn.card.flags.bFaceDown?turn.card.id:52 );
+					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?turn.card.id:52]
+						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
+						, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
+									+ (h/2)*(show)
+								, w
+								, h*(1-show) );
+
+				}
+			} else {
+				this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
+					, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
+					, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
+						
+					, w
+					, h );
+
+			}
+		}
+
+		for( let idx = 0;idx < this.moving.length; idx++ )  {
+			const move = this.moving[idx];
+			const cimg = card_images;
+			if( move.end < ms ) {
+				//console.log( "move expired... set card as down." );
+				move.card.flags.bFloating = false;
+				this.on( "land", move.card );
+				move.to.stack.control.draw();
+				this.moving.splice( idx, 1 );
+				//console.log( "last card pos was to:", move.card.id, move.card.at, move );
+				idx--;
+			} else if( move.start < ms ){
+				const cardDel = (ms - move.start)/(move.end-move.start);
+
+				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
+								, this.canvas.width * ( (1-cardDel)*move.from.x + (cardDel)*move.to.x ) /100
+								, this.canvas.height * ( (1-cardDel)*move.from.y + (cardDel)*move.to.y) /100
+								, (move.from.stack.control.image_width*(1-cardDel))+(cardDel*move.to.stack.control.image_width)
+								, ((move.from.stack.control.image_width*(1-cardDel))+ ( cardDel*move.to.stack.control.image_width))*1.5 );
+
+				
+			} else {
+				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
+					, this.canvas.width * ( move.from.x  ) /100
+					, this.canvas.height * ( move.from.y ) /100
+					, (move.from.stack.control.image_width)
+					, (move.from.stack.control.image_width)*1.5 );
+
+			}
+		}
+
+		this.draw(true);
+		this.lastTick = ms;
+		if( this.moving.length + this.turning.length ) {
+			requestAnimationFrame( (a)=>this.animate(a) );
+		} else {
+			this.startOfs = 0;
+		}
+	}
+
 }

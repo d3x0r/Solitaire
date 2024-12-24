@@ -19,7 +19,7 @@ await fetch( "./images/cards/cardset2.jsox" ).then( async (response) => {return 
 import {getImage} from "./node_modules/sack.vfs/apps/http-ws/imageLoader.js"
 import {Fraction} from "./node_modules/sack.vfs/apps/fractions/fractions.mjs"
 import {card_game} from "./card_game.js"
-const card_images = await Promise.all( cardImages.map( async (card) => {return getImage( card)}))
+export const card_images = await Promise.all( cardImages.map( async (card) => {return getImage( card)}))
 function Color(r,g,b) { return [r,g,b] }
 const converter = document.createElement("canvas");
 const converterCtx = converter.getContext("2d", {willReadFrequently :true});
@@ -225,6 +225,9 @@ export class card_stack_control {
 		this.#deck = val;
 		this.stack = val.getStack( this.deck_stack );
 		this.stack.addUpdate( card_stack_control.update, this );
+		if( this.stack.control ) 
+			console.log( "Card stack already has a control host?", this.stack.control );
+		this.stack.control = this;
 		const discard = this.#deck.getStack( "Discard" );
 		if( this.deck_stack === "Draw" ) {
 			this.stack.addOutOfCards( ()=>{
@@ -375,7 +378,60 @@ export class card_stack_control {
 	}
 
 	static update( stack )  {
+		stack.updateCards();
 		stack.draw();
+	}
+
+	updateCards() {
+
+		let y = 0;
+		let x = 0;
+
+		let xs = 0;
+		let ys = 0;
+
+		let xs_fd = 0; // face down xstep
+		let ys_fd = 0; // face down ystep
+
+		if( this.flags.bVertical ) {
+		   ys = this.step_y * this.canvas.height / 100;
+		   ys_fd = this.fd_step_y * this.card_height / 100;
+		}
+		if( this.flags.bHorizontal ) {
+		   xs = this.step_x * this.canvas.width / 100;
+		   xs_fd = this.fd_step_x * this.card_width / 100;
+		}
+
+		const cards = this.stack.cards;
+		const cstack = [];
+		for( let card = cards; card; card = card.next ){
+			//find bottom card of stack (count positions up from the table)
+			if( !card.next ) {
+				// push reverse stack from the last card.
+				for( let c = card; c; c = (c.me.ref != this.stack)?c.me.ref:null  ) {
+					cstack.push( c );
+				}
+				break;
+			}
+		}
+
+		let nsel = cstack.length;
+		for( let card of cstack ){
+			nsel--;
+			if( card.flags.bFaceDown) {
+				card.at.x = x / window.visualViewport.width * 100;
+				card.at.y = y / window.visualViewport.height * 100;
+				y += ys_fd;
+				x += xs_fd;
+			} else {
+				card.at.x = x / window.visualViewport.width * 100;
+				card.at.y = y / window.visualViewport.height * 100;
+				y += ys;
+				x += xs;
+			}
+
+		}		
+
 	}
 
 	draw() {
@@ -385,10 +441,13 @@ export class card_stack_control {
 		const stack = this;
 		let y = 0;
 		let x = 0;
+
 		let xs = 0;
 		let ys = 0;
-		let xs_fd = 0;
-		let ys_fd = 0;
+
+		let xs_fd = 0; // face down xstep
+		let ys_fd = 0; // face down ystep
+
 		if( this.flags.bVertical ) {
 		   ys = this.step_y * this.canvas.height / 100;
 		   ys_fd = this.fd_step_y * this.card_height / 100;
@@ -410,7 +469,7 @@ export class card_stack_control {
 		let nsel = cstack.length;
 		for( let card of cstack ){
 			nsel--;
-
+			if( card.flags.bFloating ) continue;
 			const cimg = ( this.active.nCardsSelected > nsel )?card_images_selected:card_images;
 
 			if( card.flags.bFaceDown) {
@@ -603,6 +662,7 @@ export class card_stack_control {
 				stack_from.game.selected_stack = null;
 
 				stack_from.stack.transfer( stack_to.stack, toTransfer );
+
 				return true;
 			}
 		}
@@ -610,17 +670,20 @@ export class card_stack_control {
 	}
 	
 
-	SelectCards( card_index_picked )
+	SelectCards( card_index_picked, noDraw )
 	{
+		const target = card_index_picked;
 		const stack = this;
 		if( !stack.flags.bNoSelect )
 		{
 			if( stack.game.selected_stack )
 			{
 				stack.game.selected_stack.active.nCardsSelected = 0;
-				if( stack.game.selected_stack != this )
-					stack.game.selected_stack.draw();
+				if( !noDraw )
+					if( stack.game.selected_stack != this )
+						stack.game.selected_stack.draw();
 			}
+			let count = 0;
 			stack.game.selected_stack = this;
 			{
 				const card_stack = stack.stack;
@@ -637,19 +700,18 @@ export class card_stack_control {
 					if( c.flags.bFaceDown ) continue;
 					reverse.push( c );
 				}
-				card_index_picked = reverse.length - card_index_picked;
-				let count = 0;
+				//card_index_picked = reverse.length - card_index_picked;
 				let thinking = 1;
 				// ignore count now... compute what we should select...
 				do
 				{
-					if( count > card_index_picked )
+					if( count >= card_index_picked )
 					{
 						thinking = 0;
 						continue;
 					}
 					_card = card;
-					card = card_stack.getNthCard( count++ );
+					card = reverse[count++];
 					if( !card )
 					{
 						thinking = 0;
@@ -716,10 +778,12 @@ export class card_stack_control {
 
 				}while( thinking );
 				stack.active.nCardsSelected = count;
-
 			}
-			this.draw();
+			if( !noDraw )
+				this.draw();
+			return ( count === target ); // did select ok.
 		}
+		return false; // no select
 	}
 
 
@@ -914,17 +978,21 @@ export class card_stack_control {
 			}
 			
 			if( card_stack.cards && card_stack.cards.flags.bFaceDown ) {
-				if( stack.flags.bTurnTop )
+				if( stack.flags.bTurnTop ) {
 					card_stack.turnTopCard();
-				else if( stack.flags.bTurnToDiscard ) {
+				} else if( stack.flags.bTurnToDiscard ) {
 					if( stack.flags.bTurn3ToDiscard ) {
 						for( let n = 0; n < 3; n++ ) {
 							card_stack.turnTopCard();
-							card_stack.transfer( stack.#deck.getStack("Discard"), 1 );
+							const stack_to = stack.#deck.getStack("Discard")
+							card_stack.transfer( stack_to, 1 );
+
 						}
 					} else {
 						card_stack.turnTopCard();
-						card_stack.transfer( stack.#deck.getStack("Discard"), 1 );
+						// update?
+						const stack_to = stack.#deck.getStack("Discard")
+						card_stack.transfer( stack_to, 1 );
 
 					}
 				}
@@ -1014,7 +1082,10 @@ export class card_stack_control {
 		//stack._b = b;
 		return 1;
 	}
-	
+
+	getCardPos( id ) {
+		
+	}	
 	
 }
 

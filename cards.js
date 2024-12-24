@@ -1,4 +1,5 @@
 
+import {Events} from "/node_modules/sack.vfs/apps/events/events.mjs"
 
 //extern char *cardlongnames[14];
 
@@ -26,7 +27,8 @@ class Card {
 	fake_id = 0;
 	flags = {
 		bDiscard: false,
-		bFaceDown: false
+		bFaceDown: false,
+		bFloating : false
 	};
 	pPlayedBy = {
 		ref: null,
@@ -35,6 +37,12 @@ class Card {
 	next = null;
 	me = {ref: null, field: null};
 
+
+	thisStack = null;
+	at = {x:0,y:0};
+	lastStack = null;
+	wasAt = {x:0,y:0};
+	
 
 	constructor( deck, id ) {
 		this.id = id;
@@ -65,7 +73,6 @@ class Card {
 	}	
 	// name of iterator...
 
-
 	grab() {
 		// save the last stack that had this card.
 		if( this.me.field === "next" ) {
@@ -89,6 +96,10 @@ class Card {
 		if( this.me.ref ) this.me.ref[this.me.field] = this.next; // isolated card
 		this.next = null;
 		this.me.ref = null;
+		this.lastStack = this.thisStack;
+		this.wasAt.x = this.at.x;
+		this.wasAt.y = this.at.y;
+		this.thisStack = null;
 		return this;
 	}
 	
@@ -107,14 +118,16 @@ struct update_callback
 };
 */
 
-class CardStack {
+class CardStack extends Events {
 	name = "CardStack";
 	cards = null;
 	update_callbacks = [];
 	out_of_cards_callbacks = [];
 	deck = null;
+	control = null; // card_stack_control assigned after the fact...
 
 	constructor( name ) {
+		super();
 		this.name = name;
 	}
 
@@ -149,11 +162,15 @@ class CardStack {
 		if( this.cards ) {
 			this.cards.flags.bFaceDown = false;
 			stack.add( this.cards );
+			this.on( "play", [this, stack, stack.top] );
+			stack.update();
 		}
 	}
 	dealTo( stack ) {
 		if( this.cards ) {
 			stack.add( this.cards );
+			this.on( "deal", [this, stack, stack.top] );
+			stack.update();
 		}
 	}
 	transfer( to, nCards ) {
@@ -176,8 +193,11 @@ class CardStack {
 				tmpStack.cards = card;
 			}
 		}
+		const moved = [];
 		while( card = tmpStack.cards )
 		{
+			card.flags.bFloating = true;
+			moved.push( card );
 			if( card.me.ref[card.me.field] = card.next ) {
 				card.next.me.ref = card.me.ref;
 				card.next.me.field = card.me.field;
@@ -189,18 +209,31 @@ class CardStack {
 			card.me.ref = to;
 			card.me.field = "cards";
 			to.cards = card;
+
+			card.thisStack = to;
 		}
+
 		this.update();
 		to.update();
+		for( let card of moved )
+		{
+			this.on( "move", [this,to,card] );
+		}
+
+		return moved;
+
 	}	
 	turnTopCard() {
 		if( this.cards )
 			this.cards.flags.bFaceDown = false;
-		this.update();
+		//this.update();
 	}
 
 	add( card ) {
 		card.grab();
+		// grab will have set thisStack = null...
+		card.thisStack = this;
+		
 		if( card.next = this.cards ) {
 			card.next.me.ref = card;
 			card.next.me.field = "next";
@@ -208,12 +241,13 @@ class CardStack {
 		card.me.ref = this;
 		card.me.field = "cards";
 		this.cards = card;
-		this.update();
+		//this.update();
 	}
 
 	discard() {
 		while( this.cards ) {
-			deck.discard( this.cards.grab() );
+			// discard grabs the card.
+			deck.discard( this.cards );
 		}
 		this.deck.deleteHand( this );
 		this.update();
@@ -297,6 +331,14 @@ class Deck {
 		bHold: false,
 		bLowball: false
 	};
+	#autoPlay = null;
+	set autoPlay( val ) {
+		this.#autoPlay = val;
+	}
+	get autoPlay() {
+		return this.#autoPlay || (()=>{});
+	}
+
 	get faces() {
 		return this.config && this.config.faces || 0;
 	}
