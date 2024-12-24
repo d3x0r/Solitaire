@@ -74,7 +74,7 @@ export class card_drag_control extends Events {
 			to.control.updateCards();
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
-			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
 			
 			this.startOfs += 0.025;
 		} );
@@ -86,10 +86,10 @@ export class card_drag_control extends Events {
 			to.control.updateCards();
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
-			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
 			this.startOfs += 0.025;
 		} );
-		stack.stack.on( "move", (from,to,card)=>{
+		stack.stack.on( "move", (from,to,card,delay)=>{
 			// card is already in new stack.
 			// card.lastStack should be === from
 			if( this.lastTick != this.thisTick ) {
@@ -97,9 +97,11 @@ export class card_drag_control extends Events {
 				this.startOfs = 0;
 			}
 			to.control.updateCards();
+			const turn = this.turning.find( (t)=>t.card === card );
+			const extraDelay = turn?turn.end-performance.now()/1000+0.005:0;
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
-			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.5, card );
+			            , this.startOfs + performance.now()/1000 + extraDelay, this.startOfs + performance.now()/1000 + extraDelay + (delay||0.32), card );
 			this.startOfs += 0.025;
 		} );
 	}
@@ -335,13 +337,13 @@ export class card_drag_control extends Events {
 			const h = (turn.card.thisStack.control.image_width)*1.5;
 			if( turn.end < ms ) {
 				turn.card.flags.bFloating = false;
-				this.on( "land", turn.card );
+				this.on( "flipped", turn.card );
 				turn.card.thisStack.control.draw();
 				this.turning.splice( idx, 1 );
 			} else if( turn.start < ms ){
 				const cardDel = (ms - turn.start)/(turn.end-turn.start);
 				if( cardDel > 0.5 ) {
-					const show = (cardDel - 0.5)*2;
+					const show = Math.sin(Math.PI/2*(cardDel - 0.5)*2);
 					//console.log( "Fliped, showing front now... ", show, cardDel, turn.card.flags.bFaceDown?52:turn.card.id )
 					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
 						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
@@ -351,7 +353,7 @@ export class card_drag_control extends Events {
 						, h*show );
 
 				} else {
-					const show = (cardDel)*2;
+					const show = Math.sin(Math.PI/2*(cardDel)*2);
 					//console.log( "Flip show: (showing back?)", show, cardDel, turn.card.flags.bFaceDown?turn.card.id:52 );
 					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?turn.card.id:52]
 						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100

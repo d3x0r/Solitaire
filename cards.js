@@ -173,7 +173,7 @@ class CardStack extends Events {
 			stack.update();
 		}
 	}
-	transfer( to, nCards ) {
+	transfer( to, nCards, delay ) {
 		const tmpStack = {
 			cards : null
 		}
@@ -217,7 +217,7 @@ class CardStack extends Events {
 		to.update();
 		for( let card of moved )
 		{
-			this.on( "move", [this,to,card] );
+			this.on( "move", [this,to,card,delay] );
 		}
 
 		return moved;
@@ -325,7 +325,7 @@ class Hand {
 }
 
 
-class Deck {
+class Deck extends Events {
 	name = "Deck";
 	flags = {
 		bHold: false,
@@ -355,6 +355,7 @@ class Deck {
 	config = null;
 	deals = 0;
 	constructor( name, config ) {
+		super();
 		this.name = name;
 		this.config = config || {
 			faces: 13,

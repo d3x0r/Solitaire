@@ -558,8 +558,9 @@ const klondike_board = {
 
 };
 
-function clone( board ) {
+export function clone( board ) {
 	const clone = {};
+	clone.name = board.name;
 	for( let stack in board){
 		if( stack === "name" ) continue;
 		clone[stack] = new card_stack_control( board[stack] );

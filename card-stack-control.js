@@ -234,13 +234,16 @@ export class card_stack_control {
 				val.deals++;
 				if( this.flags.bTurn3ToDiscard ) {
 					if( val.deals >= 3 ) {
-						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{}, ()=>{}, {} );
+						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{
+							this.#deck.on( "lose", true );
+						}, null/*()=>{}*/, {} );
 						n.show();
 						console.log( "LOSE!" );
 					}
 				} else if( this.flags.bTurnToDiscard ) {
 					if( val.deals >= 1 ) {
-						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{}, ()=>{}, {} );
+						const n = popups.simpleNotice( "LOSE", "You have Lost, New Game?", ()=>{							this.#deck.on( "lose", true );
+					},null/* ()=>{}*/, {} );
 						n.show();
 						console.log( "LOSE!" );
 					}
@@ -984,16 +987,17 @@ export class card_stack_control {
 					if( stack.flags.bTurn3ToDiscard ) {
 						for( let n = 0; n < 3; n++ ) {
 							card_stack.turnTopCard();
-							const stack_to = stack.#deck.getStack("Discard")
-							card_stack.transfer( stack_to, 1 );
+							stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 
+							//const stack_to = stack.#deck.getStack("Discard")
+							//card_stack.transfer( stack_to, 1 );
 						}
 					} else {
 						card_stack.turnTopCard();
+						stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 						// update?
-						const stack_to = stack.#deck.getStack("Discard")
-						card_stack.transfer( stack_to, 1 );
-
+						//const stack_to = stack.#deck.getStack("Discard")
+						//card_stack.transfer( stack_to, 1 );
 					}
 				}
 			} else

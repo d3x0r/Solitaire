@@ -10,7 +10,11 @@ import {setup} from "./klondike.js";
 import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
 
 const myGameDiv = popups.getFilledParent( rootId );
-setup( myGameDiv, {draw3:true} );
+const frame = myGameDiv.host;//getRootNode();
+if( frame.classList.contains ( "auto" ))
+	setup( myGameDiv, {draw3:true,fullAuto:true} );
+else
+	setup( myGameDiv, {draw3:true,fullAuto:false} );
 
 </script>
 <!--<script type="module" src="klondike.js"></script>-->
