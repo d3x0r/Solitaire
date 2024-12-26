@@ -215,7 +215,7 @@ export class card_stack_control {
 					this.card_width = width - ( ( this.cards_wide - 1 ) * this.step_x ) / 100 * width;
 					this.card_height = this.card_width * 1.5;
 				}else{
-					this.card_width = this.card_height / 1.5;
+					this.card_width = width;
 					this.card_height = height - ( ( this.cards_high - 1 ) * this.step_y ) / 100 * height;
 				}
 

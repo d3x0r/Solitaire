@@ -27,6 +27,7 @@ export class card_drag_control extends Events {
 	lastTick = 0;
 	thisTick = 0;
 	startOfs = 0;
+	startDelay = 0.025;
 	
 	moving = [];
 	turning = [];
@@ -78,7 +79,7 @@ export class card_drag_control extends Events {
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
 			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
 			
-			this.startOfs += 0.025;
+			this.startOfs += this.startDelay;
 		} );
 		stack.stack.on( "play", (from,to,card)=>{
 			if( this.lastTick != this.thisTick ) {
@@ -89,7 +90,7 @@ export class card_drag_control extends Events {
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
 			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
-			this.startOfs += 0.025;
+			this.startOfs += this.startDelay;
 		} );
 		stack.stack.on( "move", (from,to,card,delay)=>{
 			// card is already in new stack.
@@ -104,7 +105,7 @@ export class card_drag_control extends Events {
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
 			            , this.startOfs + performance.now()/1000 + extraDelay, this.startOfs + performance.now()/1000 + extraDelay + (delay||0.32), card );
-//			this.startOfs += 0.025;
+			this.startOfs += this.startDelay;
 		} );
 	}
 
@@ -162,7 +163,7 @@ export class card_drag_control extends Events {
 
 		if( this.turning.length +this.moving.length === 1 )
 			requestAnimationFrame( (a)=>this.animate(a) );
-	//	this.startOfs += 0.025;
+		this.startOfs += this.startDelay;
 	}
 
 	addMove( from, to, start, end, card ) {

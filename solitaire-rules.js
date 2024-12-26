@@ -21,6 +21,7 @@ const clock_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : true,
 	autoDraw : false,
+	dragDelay : 0,
 	_1 :  new card_stack_control({
 		flags : {
 			bOnlySame : true,
@@ -331,6 +332,7 @@ const freecell_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : true,
 	autoDraw : false,
+	dragDelay : 0.025,
     acePile1 : new card_stack_control({
 		flags : {
 			bVertical : true,
@@ -592,6 +594,7 @@ const klondike_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : true,
 	autoDraw : false,
+	dragDelay : 0.025,
     acePile1 : new card_stack_control({
 		flags : {
 			bVertical : true,
@@ -610,8 +613,8 @@ const klondike_board = {
 		y : 5,
 		width : 9,
 		height : 19,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 	}),
 	acePile2 : new card_stack_control({
 		flags : {
@@ -628,8 +631,8 @@ const klondike_board = {
 		y : 5,
 		width : 9,
 		height : 19,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 	}),
 	acePile3 : new card_stack_control({
 		flags : {
@@ -646,8 +649,8 @@ const klondike_board = {
 		y : 5,
 		width : 9,
 		height : 19,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 	}),
 	acePile4 : new card_stack_control({
 		flags : {
@@ -664,8 +667,8 @@ const klondike_board = {
 		y : 5,
 		width : 9,
 		height : 19,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 	}),
 	boardPile1 : new card_stack_control({
 		flags : {
@@ -689,8 +692,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile2 : new card_stack_control({
@@ -715,8 +718,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile3 : new card_stack_control({
@@ -741,8 +744,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile4 : new card_stack_control({
@@ -767,8 +770,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile5 : new card_stack_control({
@@ -793,8 +796,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile6 : new card_stack_control({
@@ -819,8 +822,8 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 
 	} ),
 	boardPile7 : new card_stack_control({
@@ -845,12 +848,13 @@ const klondike_board = {
 		y : 27,
 		width : 9,
 		height : 70,
-		card_width: 1,
-		card_height: 16,
+		cards_wide: 1,
+		cards_high: 16,
 	} ),
 	drawPile : new card_stack_control({
 		flags : {        	
 			bTurnToDiscard : true,
+			bVertical : true
 		},
 		startup: {
 			nDrawAtStart : 0,
@@ -859,16 +863,18 @@ const klondike_board = {
 		deck_stack : "Draw",
 		step_x : 0,
 		step_y : 0,
+		fd_step_y : -1.25,
 		x : 81,
 		y : 66,
 		width : 12,
 		height : 31.2,
-		card_width: 1,
-		card_height: 1,
+		cards_wide: 1,
+		cards_high: 20,
 	} ),
 	discardPile : new card_stack_control({
 		flags : {
-			bSelectOnlyTop : true
+			bSelectOnlyTop : true,
+			bVertical : true,
 		},
 		startup: {
 			nDrawAtStart : 0,
@@ -876,13 +882,15 @@ const klondike_board = {
 		},
 		deck_stack : "Discard",
 		step_x : 0,
-		step_y : 2,
+		step_y : 0,
+		fd_step_x : 0,
+		fd_step_y : 0,
 		x : 81,
 		y : 32,
 		width : 12,
 		height : 31.2,
-		card_width: 1,
-		card_height: 1,
+		cards_wide: 1,
+		cards_high: 24,
 	} ),
 
 };
@@ -891,7 +899,7 @@ export function clone( board ) {
 	const clone = {};
 	clone.name = board.name;
 	for( let stack in board){
-		if( ["name","autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stack ) ) {
+		if( ["name","dragDelay", "autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stack ) ) {
 			clone[stack] = board[stack];
 			continue;
 		}

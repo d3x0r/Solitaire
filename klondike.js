@@ -22,9 +22,9 @@ export function setup( parent, options ) {
 	const tableau = [];
 	let discard = null;
 	let drawPile = null;
-
+	dragControl.startDelay = useBoard.dragDelay;
 	for( let stackName of Object.keys( useBoard ) ){
-		if( ["name","autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stackName ) ) continue;
+		if( ["name","dragDelay", "autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stackName ) ) continue;
 		const stack = useBoard[stackName];
 		// this is magic.
 		stack.deck = deck;
@@ -89,7 +89,7 @@ export function setup( parent, options ) {
 			c++;
 		}
 		dealtTo.forEach( stack => {stack.draw()})
-
+		draw.control.draw();
 	}
 
 	deck.on("lose", ()=>{
