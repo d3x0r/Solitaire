@@ -4,8 +4,23 @@ import {card_stack_control} from "./card-stack-control.js"
 const step_y = 2;
 const step_x = 2;
 
+class Board {
+	name= "boardName";
+	autoPlayFoundation = true;
+	autoPlayTableau = true;
+	autoPlayDiscard = true;
+	autoDraw = false;
+    constructor( name, stacks ) {
+
+	}
+}
+
 const freecell_board = { 
     name : "Freecell",
+	autoPlayFoundation : true,
+	autoPlayTableau : true,
+	autoPlayDiscard : true,
+	autoDraw : false,
     acePile1 : new card_stack_control({
 		flags : {
 			bVertical : true,
@@ -263,6 +278,10 @@ const freecell_board = {
 
 const klondike_board = { 
     name : "Klondike",
+	autoPlayFoundation : true,
+	autoPlayTableau : true,
+	autoPlayDiscard : true,
+	autoDraw : false,
     acePile1 : new card_stack_control({
 		flags : {
 			bVertical : true,
@@ -562,7 +581,10 @@ export function clone( board ) {
 	const clone = {};
 	clone.name = board.name;
 	for( let stack in board){
-		if( stack === "name" ) continue;
+		if( ["name","autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stack ) ) {
+			clone[stack] = board[stack];
+			continue;
+		}
 		clone[stack] = new card_stack_control( board[stack] );
 	}
 	return clone;
@@ -573,16 +595,6 @@ klondike3_board.name = "Klondike Draw 3";
 klondike3_board.drawPile.flags.bTurn3ToDiscard = true;
 
 
-for( let stack in freecell_board){
-	if( stack === "name" ) continue;
-	freecell_board[stack].x = freecell_board[stack].x * 1 / 80;
-	freecell_board[stack].y = freecell_board[stack].y * 1 / 60;
-	freecell_board[stack].width = freecell_board[stack].width * 4 / 80;
-	freecell_board[stack].height = freecell_board[stack].height * 4 / 60;
-}
-for( let stack in klondike_board){
-	if( stack === "name" ) continue;
-}
 
 
 export {freecell_board, klondike_board, klondike3_board};

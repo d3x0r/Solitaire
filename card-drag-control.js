@@ -10,6 +10,8 @@ export class card_drag_control extends Events {
 	ctx = this.canvas.getContext ("2d" );
 	cardx = 0;
 	cardy = 0;
+	mx = 0;
+	my = 0;
 	ofsx = 0;
 	ofsy = 0;
 	touchx = 0;
@@ -220,13 +222,15 @@ export class card_drag_control extends Events {
 	}
 
 	static mouse( self, x, y, b ) {
-		//msg.textContent=( "Drag event:"+x+","+y+","+b );
+		msg.textContent=( "Drag event:"+x+","+y+","+b+" " + self.ofsx+","+self.ofsy );
 		if( !(self._b & 1) && (b & 1) ) {
 			self.setDrag( x, y );
+			console.log( "Start drag" );
 
 		}
 		if( !(self._b & 1) && (b & 1) ) {
-			self.drag( x - self.mx, y - self.my );
+			self.drag( x - self.stack.mx, y - self.stack.my );
+			console.log( "Drag" );
 		}
 		if( (self._b & 1) && !(b & 1) ) {
 			//self.stopDrag( x, y );
@@ -257,34 +261,47 @@ export class card_drag_control extends Events {
 				if( best.stack != self.stack )
 					self.stack.DoMoveCards( best.stack );
 			}
+			for( let card of self.cards) {
+				card.flags.bFloating = false;
+				card.thisStack.control.draw();
+			}
 			self.cards = null;
 			self.frame.classList.remove( "active" );
 		}
-		self.cardx = x;
-		self.cardy = y;
+		//self.cardx = x;
+		//self.cardy = y;
 		self.draw();
 	}
 
 	select( stack, cards, cx, cy, mx, my ) {
-		this.cardx = mx-cx;
-		this.cardy = my-cy;
+		this.cardx = cx;
+		this.cardy = cy;
+		this.mx = mx;
+		this.my = my;
 		this.ofsx = mx;
 		this.ofsy = my;
 		this.cards = cards;
+		for( let card of this.cards) {
+			card.flags.bFloating = true;
+		}
 		this.stack = stack;
+
+		stack.draw();
 		this.draw();
 		this.frame.classList.add( "active" );
 	}
 
 	setDrag( x, y ) {
+		this.ofsx = x;
+		this.ofsy = y;
 	}
 
 	stopDrag( x, y ) {
 	}
 
 	drag(x,y) {
-		this.cardx += x;
-		this.cardy += y;
+		//this.cardx += x;
+		//this.cardy += y;
 	}
 
 	draw(noClear) {
@@ -293,24 +310,23 @@ export class card_drag_control extends Events {
 		this.ctx.clearRect( 0, 0, this.canvas.width, this.canvas.height );
 		if( !this.cards ) return;
 		this.ctx.fillStyle = "rgba( 0, 0, 0, 0.5 )";
-		this.ctx.fillRect( this.cardx-this.ofsx, this.cardy-this.ofsy, 100, 100 );
-		let cx = this.cardx-this.ofsx;
-		let cy = this.cardy-this.ofsy;
-		let xs = 0;
-		let ys = 0;
-		if( this.stack.flags.bVertical )
-		   ys = this.stack.step_y * this.stack.canvas.height / 100;
-		if( this.stack.flags.bHorizontal )
-		   xs = this.stack.step_x * this.stack.canvas.width / 100;
-		const cimg = card_images_selected;
 		for( let card of this.cards ) {
+			this.ctx.fillRect( card.at.x/100*this.stack.image_width+this.cardx + ( this.mx - this.ofsx)
+							, card.at.y/100*this.stack.image_height+this.cardy + ( this.my - this.ofsy)
+							, this.stack.image_width, this.stack.image_width*1.5 );
+		}
+
+		let cx = this.cardx + (this.mx-this.ofsx);
+		let cy = this.cardy + (this.my-this.ofsy);
+		const cimg = card_images_selected;
+		for( let c = this.cards.length-1; c >= 0 ; c-- ) {
+			const card = this.cards[c];
 			if( !card.flags.bFaceDown) {
 				this.ctx.drawImage( cimg[card.id]
-								, card.at.x, card.at.y
+								, cx+this.stack.image_width*(card.at.x)/100
+								, cy+this.stack.image_height*(card.at.y)/100
 									//, cx, cy
 									, this.stack.image_width, this.stack.image_width*1.5 );
-				cy += ys;
-				cx += xs;
 			}else
 				this.ctx.drawImage( cimg[52], card.at.x, card.at.y
 									//, cx, cy

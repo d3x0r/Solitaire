@@ -476,10 +476,14 @@ export class card_stack_control {
 			const cimg = ( this.active.nCardsSelected > nsel )?card_images_selected:card_images;
 
 			if( card.flags.bFaceDown) {
+				card.x = x/this.canvas.width*100;
+				card.y = y/this.canvas.height*100;
 				this.ctx.drawImage( cimg[card_images.length-1], x, y, this.canvas.width, this.canvas.width * 1.5  );
 				y += ys_fd;
 				x += xs_fd;
 			} else {
+				card.x = x/this.canvas.width*100;
+				card.y = y/this.canvas.height*100;
 				this.ctx.drawImage( cimg[card.id], x, y, this.canvas.width, this.canvas.width * 1.5 );
 				y += ys;
 				x += xs;
@@ -790,7 +794,7 @@ export class card_stack_control {
 	}
 
 
-	static CanMoveCards( from, to )
+	static CanMoveCards( from, to, count )
 	{
 		if( from.game == to.game )
 		{
@@ -1059,6 +1063,8 @@ export class card_stack_control {
 			const cards = stack.stack.cards;
 			const cstack = [];
 			for( let card = cards; card; card = card.next ){
+				cstack.push( card );
+				if(0)
 				if( !card.next ) {
 					for( let c = card; c; c = (c.me.ref != stack.stack)?c.me.ref:null  ) {
 						if( !c.flags.bFaceDown ){
@@ -1079,8 +1085,9 @@ export class card_stack_control {
 			if( !(stack._b&1) && (stack.b&1) ) {
 				//console.log ( "selected to drag layer at " + x + "," + y );
 				stack.#dragControl.select( stack
-							, cstack.slice( cstack.length-stack.active.nCardsSelected )
-							, cx + cstack.length * stack.scaled_step_x, cy + cstack.length * stack.scaled_step_y, x - (cstack.length-stack.active.nCardsSelected) * xs, y - (cstack.length-stack.active.nCardsSelected) * ys );
+							, cstack.slice( 0, stack.active.nCardsSelected )
+							, cx, cy
+							, x+cx, y+cy );
 			}
 		}
 		//stack._b = b;
