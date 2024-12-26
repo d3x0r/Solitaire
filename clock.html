@@ -1,0 +1,17 @@
+<link rel="stylesheet" href="./style.css">
+
+<div id="clock-game">
+
+</div>
+<script type="module">
+// this gets wrapped with code that provides
+// rootId
+import {setup} from "./clock.js";
+import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
+
+const myGameDiv = popups.getFilledParent( rootId );
+const frame = myGameDiv.host;//getRootNode();
+	setup( myGameDiv, {fullAuto:false} );
+
+</script>
+<!--<script type="module" src="klondike.js"></script>-->

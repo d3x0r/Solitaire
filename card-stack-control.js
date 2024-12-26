@@ -73,6 +73,7 @@ export class card_stack_control {
 		bReversed : false,
 		bStacked : false,
 		bNotStackedDown : false,
+		bPlayToBottom : false, // slides under deck
 
 		bOnlyAceWhenEmpty : false,
 		bOnlyKingWhenEmpty : false,
@@ -126,7 +127,8 @@ export class card_stack_control {
 	deck_stack = "Draw"; // default deck stack
 	stack = null;
 
-
+	cards_wide = 1;
+	cards_high = 1;
 	step_x = 0;
 	step_y = 0;
 	fd_step_x = 0;
@@ -175,7 +177,7 @@ export class card_stack_control {
 		Object.assign( this.startup, options.startup );
 		Object.assign( this.active, options.active );
 		[ 'deck_stack','step_x','step_y','fd_step_x','fd_step_y'
-		  , 'x','y'
+		  , 'x','y', 'cards_wide', 'cards_high',
 		  , 'width','height'].forEach( (key) => {
 			this[key] = options[key];	
 		} );
@@ -207,6 +209,15 @@ export class card_stack_control {
 				this.canvas.height = height;
 				this.top = realRect.top;
 				this.left = realRect.left;
+
+				if( !this.flags.bVertical ) {
+					this.card_width = width - ( ( this.cards_wide - 1 ) * this.step_x ) / 100 * width;
+					this.card_height = this.card_width * 1.5;
+				}else{
+					this.card_width = this.card_height / 1.5;
+					this.card_height = height - ( ( this.cards_high - 1 ) * this.step_y ) / 100 * height;
+				}
+
 				this.draw();
 				//console.log( "at least one resize/", rect );	
 			}
@@ -401,11 +412,11 @@ export class card_stack_control {
 
 		if( this.flags.bVertical ) {
 		   ys = this.step_y * this.canvas.height / 100;
-		   ys_fd = this.fd_step_y * this.card_height / 100;
+		   ys_fd = this.fd_step_y * this.canvas.width / 100;
 		}
 		if( this.flags.bHorizontal ) {
 		   xs = this.step_x * this.canvas.width / 100;
-		   xs_fd = this.fd_step_x * this.card_width / 100;
+		   xs_fd = this.fd_step_x * this.canvas.width / 100;
 		}
 
 		const cards = this.stack.cards;
@@ -460,8 +471,9 @@ export class card_stack_control {
 		}
 		if( this.flags.bHorizontal ) {
 		   xs = this.step_x * this.canvas.width / 100;
-		   xs_fd = this.fd_step_x * this.card_width / 100;
+		   xs_fd = this.fd_step_x * this.canvas.width / 100;
 		}
+
 		const cards = this.stack.cards;
 		const cstack = [];
 		for( let card = cards; card; card = card.next ){
@@ -482,13 +494,13 @@ export class card_stack_control {
 			if( card.flags.bFaceDown) {
 				card.x = x/this.canvas.width*100;
 				card.y = y/this.canvas.height*100;
-				this.ctx.drawImage( cimg[card_images.length-1], x, y, this.canvas.width, this.canvas.width * 1.5  );
+				this.ctx.drawImage( cimg[card_images.length-1], x, y, this.card_width, this.card_height  );
 				y += ys_fd;
 				x += xs_fd;
 			} else {
 				card.x = x/this.canvas.width*100;
 				card.y = y/this.canvas.height*100;
-				this.ctx.drawImage( cimg[card.id], x, y, this.canvas.width, this.canvas.width * 1.5 );
+				this.ctx.drawImage( cimg[card.id], x, y, this.card_width, this.card_height );
 				y += ys;
 				x += xs;
 			}
@@ -677,8 +689,10 @@ export class card_stack_control {
 				const toTransfer = stack_from.active.nCardsSelected;
 				stack_from.active.nCardsSelected = 0;
 				stack_from.game.selected_stack = null;
-
-				stack_from.stack.transfer( stack_to.stack, toTransfer );
+				if( stack_to.flags.bPlayToBottom )
+					stack_from.stack.transferBottom( stack_to.stack, toTransfer );
+				else
+					stack_from.stack.transfer( stack_to.stack, toTransfer );
 
 				return true;
 			}
@@ -937,6 +951,11 @@ export class card_stack_control {
 						return false;
 				}
 			}
+			if( to.flags.nMustPlay ) {
+				if( from.#deck.CARD_NUMBER( from.stack.cards.id ) !== (to.flags.nMustPlay-1) )
+					return false;
+					
+			}
 			if( to.flags.bOnlyPlusOne || to.flags.bOnlyMinusOne )
 			{
 				if( to_stack.cards ) // not empty
@@ -999,6 +1018,7 @@ export class card_stack_control {
 			if( card_stack.cards && card_stack.cards.flags.bFaceDown ) {
 				if( stack.flags.bTurnTop ) {
 					card_stack.turnTopCard();
+					stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 				} else if( stack.flags.bTurnToDiscard ) {
 					if( stack.flags.bTurn3ToDiscard ) {
 						for( let n = 0; n < 3; n++ ) {

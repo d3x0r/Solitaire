@@ -15,6 +15,316 @@ class Board {
 	}
 }
 
+const clock_board = { 
+    name : "Clock",
+	autoPlayFoundation : true,
+	autoPlayTableau : true,
+	autoPlayDiscard : true,
+	autoDraw : false,
+	_1 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 1, // 1 based so 0 is disable.			
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "1",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 63,
+		y : 8,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 10,
+		height : 15,
+	}),
+	_2 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 2, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "2",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 75,
+		y : 26,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_3 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 3, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "3",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 85,
+		y : 42.5,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_4 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 4,
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "4",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 75,
+		y : 59,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_5 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 5, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "5",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 63,
+		y : 76,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_6 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 6, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+			bTurnTop : true,
+		},
+		deck_stack : "6",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 42.5,
+		y : 85,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_7 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 7, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "7",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 25,
+		y : 76,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_8 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 8, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "8",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 13,
+		y : 59,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_9 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 9, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "9",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 0,
+		y : 42.5,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_10 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 10, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "10",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 13,
+		y : 26,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_11 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 11, // 1 based so 0 is disable.
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "11",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 25,
+		y : 8,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_12 :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 12,
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "12",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 42.5,
+		y : 0,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+	_dot :  new card_stack_control({
+		flags : {
+			bOnlySame : true,
+			bPlayToBottom : true,
+			nMustPlay : 13,
+			bTurnTop : true,
+		},
+		startup : {
+			nDrawAtDeal : 0,
+			nDrawDownAtStart : 4,
+		},
+		deck_stack : "dot",
+		step_x : 10,
+		step_y : 0,
+		fd_step_x : 10,
+		fd_step_y : 0,
+		x : 42.5,
+		y : 42.5,
+		cards_wide : 4,
+		cards_high : 1,
+		width : 15,
+		height : 15,
+	}),
+
+
+};
+
 const freecell_board = { 
     name : "Freecell",
 	autoPlayFoundation : true,
@@ -597,4 +907,4 @@ klondike3_board.drawPile.flags.bTurn3ToDiscard = true;
 
 
 
-export {freecell_board, klondike_board, klondike3_board};
+export {freecell_board, klondike_board, klondike3_board, clock_board};

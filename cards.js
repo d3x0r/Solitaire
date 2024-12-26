@@ -223,6 +223,61 @@ class CardStack extends Events {
 		return moved;
 
 	}	
+
+	transferBottom( to, nCards, delay ) {
+		const tmpStack = {
+			cards : null
+		}
+		let card;
+		for( let n = 0; n < nCards; n++ )
+		{
+			card = this.cards;
+			if( card )
+			{
+				card.grab();
+				if( card.next = tmpStack.cards ) {
+					card.next.me.ref = card;
+					card.next.me.field = "next";
+				}
+				card.me.ref = tmpStack;
+				card.me.field = "cards";
+				tmpStack.cards = card;
+			}
+		}
+		const moved = [];
+		let lastCard = to.cards;
+		while( lastCard && lastCard.next )
+			lastCard = lastCard.next;
+		while( card = tmpStack.cards )
+		{
+			card.flags.bFloating = true;
+			moved.push( card );
+			if( card.me.ref[card.me.field] = card.next ) {
+				card.next.me.ref = card.me.ref;
+				card.next.me.field = card.me.field;
+			}
+			
+			lastCard.next = card;
+
+			card.me.ref = lastCard;
+			card.me.field = "next";
+			card.next = null;
+			lastCard = card;
+
+			card.thisStack = to;
+		}
+
+		this.update();
+		to.update();
+		for( let card of moved )
+		{
+			this.on( "move", [this,to,card,delay] );
+		}
+
+		return moved;
+
+	}	
+
 	turnTopCard() {
 		if( this.cards )
 			this.cards.flags.bFaceDown = false;
