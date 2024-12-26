@@ -113,6 +113,7 @@ export class card_stack_control {
 	active = {
 		nMustPlay : 0, // specific card must be played here...
 		nCardsSelected : 0, // number of cards selected from the top
+		lastSelectedStack : null,
 	};
 
 	allow_if_has_cards = []; // can play if any of these stacks have cards
@@ -162,6 +163,8 @@ export class card_stack_control {
 	tx = 0;
 	ty = 0;
 	touches = [];
+	px = 0;
+	py = 0;
 
 	frame = document.createElement ("div" );
 	canvas = document.createElement ("canvas" );
@@ -422,13 +425,13 @@ export class card_stack_control {
 		for( let card of cstack ){
 			nsel--;
 			if( card.flags.bFaceDown) {
-				card.at.x = x / window.visualViewport.width * 100;
-				card.at.y = y / window.visualViewport.height * 100;
+				card.at.x = x / this.canvas.width * 100;
+				card.at.y = y / this.canvas.height * 100;
 				y += ys_fd;
 				x += xs_fd;
 			} else {
-				card.at.x = x / window.visualViewport.width * 100;
-				card.at.y = y / window.visualViewport.height * 100;
+				card.at.x = x / this.canvas.width * 100;
+				card.at.y = y / this.canvas.height * 100;
 				y += ys;
 				x += xs;
 			}
@@ -473,7 +476,8 @@ export class card_stack_control {
 		for( let card of cstack ){
 			nsel--;
 			if( card.flags.bFloating ) continue;
-			const cimg = ( this.active.nCardsSelected > nsel )?card_images_selected:card_images;
+			const cimg = ( this.game && this.game.selected_stack === this && this.active.nCardsSelected > nsel )
+					?card_images_selected:card_images;
 
 			if( card.flags.bFaceDown) {
 				card.x = x/this.canvas.width*100;
@@ -519,6 +523,10 @@ export class card_stack_control {
 				for( card = cardstack.last_card; card; card = (card.me.field == "next" && card.me.ref ) )
 				{
 					const card_image = (stack.active.nCardsSelected?card_images_selected:card_images)[card.flags.bFaceDown?this.#max_id:card.id];
+					if( stack.active.nCardsSelected && this.active.lastSelectedStack !== this ){
+						this.active.lastSelectedStack = this;
+						draw
+					}
 					if( card_image )
 					{
 						s_width = stack.width;
@@ -632,6 +640,8 @@ export class card_stack_control {
 	SetStackCards()
 	{
 		const rect = this.canvas.getBoundingClientRect();
+		this.px = rect.left;
+		this.py = rect.top;
 		this.canvas.width = rect.width;
 		this.canvas.height = rect.height;
 		//this.SetStackCards(); 
@@ -681,12 +691,13 @@ export class card_stack_control {
 	{
 		const target = card_index_picked;
 		const stack = this;
+		//console.log( "card index:", card_index_picked )
 		if( !stack.flags.bNoSelect )
 		{
 			if( stack.game.selected_stack )
 			{
 				stack.game.selected_stack.active.nCardsSelected = 0;
-				if( !noDraw )
+				//if( !noDraw )
 					if( stack.game.selected_stack != this )
 						stack.game.selected_stack.draw();
 			}
@@ -712,6 +723,7 @@ export class card_stack_control {
 				// ignore count now... compute what we should select...
 				do
 				{
+					//console.log( "Count at select is :", count );
 					if( count >= card_index_picked )
 					{
 						thinking = 0;
@@ -1029,12 +1041,13 @@ export class card_stack_control {
 				
 				card = stack.stack.cards;
 				count = 0;
+				const percentY = (y) / stack.canvas.height * 100;
 				for( ; card; card = card.next ){
 					if( card.flags.bFaceDown ) {
 						continue; // can't select face down cards
 					}
 					count++;
-					if( y < (count*scaled_step_height+fd_skip_y)) {
+					if( percentY > (card.at.y)) {
 						break;
 					}
 				}

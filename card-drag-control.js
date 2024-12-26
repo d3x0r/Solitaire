@@ -157,7 +157,7 @@ export class card_drag_control extends Events {
 			this.startOfs = 0;
 		}
 
-		this.turning.push( {card,start:this.startOfs + performance.now()/1000+start,end:this.startOfs + performance.now()/1000+end} );
+		this.turning.unshift( {card,start:this.startOfs + performance.now()/1000+start,end:this.startOfs + performance.now()/1000+end} );
 		card.flags.bFloating = true;
 
 		if( this.turning.length +this.moving.length === 1 )
@@ -166,7 +166,8 @@ export class card_drag_control extends Events {
 	}
 
 	addMove( from, to, start, end, card ) {
-		this.moving.push( {card,start, end, from,to} );
+		this.moving.unshift( {card,start, end, from,to} );
+		//console.log( "Setting floating", card.name, end );
 		card.flags.bFloating = true;  // table draw code shouldn't draw this until it gets to the target...
 		if( this.turning.length +this.moving.length === 1 )
 			requestAnimationFrame( (a)=>this.animate(a) );
@@ -352,18 +353,19 @@ export class card_drag_control extends Events {
 			const w = (turn.card.thisStack.control.image_width);
 			const h = (turn.card.thisStack.control.image_width)*1.5;
 			if( turn.end < ms ) {
+				this.turning.splice( idx, 1 );
+				//console.log( "turn expired... set card as down.", turn.card.name );
 				turn.card.flags.bFloating = false;
 				this.on( "flipped", turn.card );
 				turn.card.thisStack.control.draw();
-				this.turning.splice( idx, 1 );
 			} else if( turn.start < ms ){
 				const cardDel = (ms - turn.start)/(turn.end-turn.start);
 				if( cardDel > 0.5 ) {
 					const show = Math.sin(Math.PI/2*(cardDel - 0.5)*2);
 					//console.log( "Fliped, showing front now... ", show, cardDel, turn.card.flags.bFaceDown?52:turn.card.id )
 					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
-						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
-						, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
+						, turn.card.thisStack.control.px + turn.card.thisStack.control.canvas.width * ( turn.card.at.x ) /100
+						, turn.card.thisStack.control.py + turn.card.thisStack.control.canvas.height * ( turn.card.at.y) /100
 							+ (h/2)*(1-show)
 						, w
 						, h*show );
@@ -390,20 +392,21 @@ export class card_drag_control extends Events {
 			}
 		}
 
+		//console.log( "Frame tick:",ms );
 		for( let idx = 0;idx < this.moving.length; idx++ )  {
 			const move = this.moving[idx];
 			const cimg = card_images;
 			if( move.end < ms ) {
-				//console.log( "move expired... set card as down." );
+				this.moving.splice( idx, 1 );
+				//console.log( "move expired... set card as down.", move.end, move.card.name );
 				move.card.flags.bFloating = false;
 				this.on( "land", move.card );
 				move.to.stack.control.draw();
-				this.moving.splice( idx, 1 );
 				//console.log( "last card pos was to:", move.card.id, move.card.at, move );
 				idx--;
 			} else if( move.start < ms ){
 				const cardDel = (ms - move.start)/(move.end-move.start);
-
+				//console.log( "Moving card:", cardDel, move.card.name );
 				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
 								, this.canvas.width * ( (1-cardDel)*move.from.x + (cardDel)*move.to.x ) /100
 								, this.canvas.height * ( (1-cardDel)*move.from.y + (cardDel)*move.to.y) /100
