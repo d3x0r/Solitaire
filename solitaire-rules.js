@@ -309,7 +309,7 @@ const clock_board = {
 			nDrawAtDeal : 0,
 			nDrawDownAtStart : 4,
 		},
-		deck_stack : "dot",
+		deck_stack : "13",
 		step_x : 10,
 		step_y : 0,
 		fd_step_x : 10,

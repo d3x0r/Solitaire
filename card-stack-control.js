@@ -151,6 +151,7 @@ export class card_stack_control {
 	image_height = 0;
 	#max_id = 0;
 
+	thing = null;
 	//let nCards, // array, may be by dimensional...
 	//Image *card_image,
 	//CDATA background,
@@ -469,7 +470,7 @@ export class card_stack_control {
 		   ys = this.step_y * this.canvas.height / 100;
 		   ys_fd = this.fd_step_y * this.card_height / 100;
 		}
-		if( this.flags.bHorizontal ) {
+		if( !this.flags.bVertical ) {
 		   xs = this.step_x * this.canvas.width / 100;
 		   xs_fd = this.fd_step_x * this.canvas.width / 100;
 		}
@@ -1018,6 +1019,7 @@ export class card_stack_control {
 			if( card_stack.cards && card_stack.cards.flags.bFaceDown ) {
 				if( stack.flags.bTurnTop ) {
 					card_stack.turnTopCard();
+					if( stack.thing ) stack.thing();
 					stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 				} else if( stack.flags.bTurnToDiscard ) {
 					if( stack.flags.bTurn3ToDiscard ) {

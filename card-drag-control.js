@@ -104,7 +104,7 @@ export class card_drag_control extends Events {
 			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
 			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
 			            , this.startOfs + performance.now()/1000 + extraDelay, this.startOfs + performance.now()/1000 + extraDelay + (delay||0.32), card );
-			this.startOfs += 0.025;
+//			this.startOfs += 0.025;
 		} );
 	}
 
@@ -162,7 +162,7 @@ export class card_drag_control extends Events {
 
 		if( this.turning.length +this.moving.length === 1 )
 			requestAnimationFrame( (a)=>this.animate(a) );
-		this.startOfs += 0.025;
+	//	this.startOfs += 0.025;
 	}
 
 	addMove( from, to, start, end, card ) {
@@ -350,8 +350,8 @@ export class card_drag_control extends Events {
 		for( let idx = 0;idx < this.turning.length; idx++ )  {
 			const turn = this.turning[idx];
 			const cimg = card_images;
-			const w = (turn.card.thisStack.control.image_width);
-			const h = (turn.card.thisStack.control.image_width)*1.5;
+			const w = (turn.card.thisStack.control.card_width);
+			const h = (turn.card.thisStack.control.card_height);
 			if( turn.end < ms ) {
 				this.turning.splice( idx, 1 );
 				//console.log( "turn expired... set card as down.", turn.card.name );
@@ -410,16 +410,16 @@ export class card_drag_control extends Events {
 				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
 								, this.canvas.width * ( (1-cardDel)*move.from.x + (cardDel)*move.to.x ) /100
 								, this.canvas.height * ( (1-cardDel)*move.from.y + (cardDel)*move.to.y) /100
-								, (move.from.stack.control.image_width*(1-cardDel))+(cardDel*move.to.stack.control.image_width)
-								, ((move.from.stack.control.image_width*(1-cardDel))+ ( cardDel*move.to.stack.control.image_width))*1.5 );
+								, (move.from.stack.control.card_width*(1-cardDel))+(cardDel*move.to.stack.control.card_width)
+								, ((move.from.stack.control.card_height*(1-cardDel))+ ( cardDel*move.to.stack.control.card_height)) );
 
 				
 			} else {
 				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
 					, this.canvas.width * ( move.from.x  ) /100
 					, this.canvas.height * ( move.from.y ) /100
-					, (move.from.stack.control.image_width)
-					, (move.from.stack.control.image_width)*1.5 );
+					, move.from.stack.control.card_width
+					, move.from.stack.control.card_height );
 
 			}
 		}

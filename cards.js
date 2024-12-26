@@ -506,6 +506,7 @@ class Deck extends Events {
 		const stack = this.stacks.find( s => s.name === name );
 		if( !stack ) {
 			const stack = new CardStack( name );
+			stack.deck = this;
 			this.stacks.push( stack );
 			return stack;
 		}

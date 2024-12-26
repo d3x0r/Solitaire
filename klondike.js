@@ -12,7 +12,7 @@ export function setup( parent, options ) {
 	options = options || { draw3 : false, fullAuto : true };
 	// the name should change after clone... (maybe extend clone?)
 	const useBoard = clone( options.draw3 ? klondike3_board : klondike_board );
-	let deck = getStandardDeck( useBoard.name = useBoard.name + options.fullAuto?"(auto)":"(manual)" );
+	let deck = getStandardDeck( useBoard.name = useBoard.name + (options.fullAuto?"(auto)":"(manual)") );
 	const stacks = [];
 	const fill = parent.querySelector( "#klondike-game" );
 	const dragControl = new card_drag_control( parent );

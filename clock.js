@@ -12,34 +12,52 @@ export function setup( parent, options ) {
 	options = options || { draw3 : false, fullAuto : false };
 	// the name should change after clone... (maybe extend clone?)
 	const useBoard = clone( clock_board );
-	let deck = getStandardDeck( useBoard.name = useBoard.name + options.fullAuto?"(auto)":"(manual)" );
+	let deck = getStandardDeck( useBoard.name = useBoard.name + (options.fullAuto?"(auto)":"(manual)") );
 	const stacks = [];
 	const fill = parent.querySelector( "#clock-game" );
 	const dragControl = new card_drag_control( parent );
 	// use useBoard.name 
-
+	const foundations = [];
+	let first = true;
 
 	for( let stackName of Object.keys( useBoard ) ){
 		if( ["name","autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stackName ) ) continue;
 		const stack = useBoard[stackName];
 		// this is magic.
 		stack.deck = deck;
+		stack.thing = ()=>{
+			first = true;
+		}
 		stack.dragControl = dragControl;
 		stack.append( fill );
 		stacks.push( stack );
+		const snum = Number( stack.name );
+		let f;
+		for( f = 0; f < foundations.length; f++ ) {
+			if( Number(foundations.name)  > snum ) {
+				splice( foundations, 0, stack ); break;
+			}
+		}
+		if( f === foundations.length ) foundations.push( stack );
 	}
 	card_game.makeGame( useBoard.name, deck );
 
 	dragControl.on( "land", (card)=>{
-		deck.autoPlay(card, true, false);
+		if( first ) {
+			first = false;
+			deck.autoPlay(card, true, false);
+		}
 	} );
 	dragControl.on( "flipped", (card)=>{
-		deck.autoPlay(card, false, true);
+		if( first ) {
+			first = false;
+			deck.autoPlay(card, false, true);
+		}
 	} );
 
 	
 	const newGame = () => {
-
+		first = true;
 		const game = card_game.getGame( useBoard.name );
 
 		for( let stack of stacks ){
@@ -94,39 +112,35 @@ export function setup( parent, options ) {
 		//console.log( "time to make a new move...", lastCard );
 
 		if( wasFlip ) {
-		}
-
-/*
-		for( let stk of this.stacks ) {
-			if( stk === lastCard.thisStack ) continue;
-			const t = stk.control;
-			if( !t ) continue;
-			let found = false;
-			
-			for( let s = 1; t.SelectCards( s, true ); s++ ) {
-				if( t.stack.top.flags.bFloating ) break;
-				if( s === 1 ) {
-					// only move the last card from table to foundation
-					for( let f of this.stacks ) {
-						if( card_stack_control.CanMoveCards( t, f ) ) {
-							lastCard.thisStack.control.DoMoveCards( f );
-							if( t.stack.top ) {
-								if( t.stack.top.flags.bFaceDown ) {
-									dragControl.addTurn( t.stack.top, 0, 0.125 );
-									t.stack.turnTopCard();
-								}
-								//console.log( "Turn top card(4)")
-								card_stack_control.update( t );
-							}	
-							//console.log( "Played to foundation...." );
-							return;
-						} 
-					}
+			if( lastCard ) {
+				// select this flipped card - it's the one we want to move somewhere.
+				if( useBoard.autoPlayFoundation ) {
+					lastCard.thisStack.control.SelectCards( 1, false );
+					//if( card_stack_control.CanMoveCards( lastCard.thisStack.control, f ) ) 
+					const num = lastCard.deck.CARD_NUMBER( lastCard.id );
+					lastCard.thisStack.control.DoMoveCards( foundations[num] );
+					if( useBoard.autoPlayDiscard ) {
+						autoPlay( lastCard, true, false );						
+					} else first = true;
 				}
-				if( found ) break;
 			}
 		}
-*/
+
+		if( wasFloat ) {
+			//if( useBoard.autoPlayFoundation ) 
+			{
+				const t = lastCard.thisStack;
+				if( t.top.flags.bFaceDown ) {
+					dragControl.addTurn( t.top, 0, 0.125 );
+					t.turnTopCard();
+					if( useBoard.autoPlayDiscard ) {
+						// don't wait for animation to end... we know where it's going... and what to flip.
+						autoPlay( t.top, false, true );
+					} else first = true;
+				}
+			}
+		}
+
 		
 	}
 
