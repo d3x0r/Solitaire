@@ -638,12 +638,13 @@ export class card_stack_control {
 		this.canvas.className = "card-stack-canvas";
 		parent.appendChild( this.canvas );
 
+
 		this.canvas.style.position = "absolute";
-		this.canvas.style.left = this.x+"vw";
-		this.canvas.style.top = this.y+"vh";
+		this.canvas.style.left = this.x+"%";
+		this.canvas.style.top = this.y+"%";
 		this.canvas.style.backgroundColor = "#003000";
-		this.canvas.style.width = this.width+"vw";
-		this.canvas.style.height = this.height+"vh";
+		this.canvas.style.width = this.width+"%";
+		this.canvas.style.height = this.height+"%";
 
 		//this.canvas.style.border = "1px solid black";
 

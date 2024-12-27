@@ -27,4 +27,7 @@ include3( "#game1" );
 include( "#game1", true );
 include3( "#game1", true );
 
+include( "#game1", false, "Freecell", "freecell.html" )
+include( "#game1", false, "Clover Field", "clover.html" )
+
 include( "#game1", false, "Clock", "clock.html" )
