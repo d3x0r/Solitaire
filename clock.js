@@ -15,7 +15,8 @@ export function setup( parent, options ) {
 	let deck = getStandardDeck( useBoard.name = useBoard.name + (options.fullAuto?"(auto)":"(manual)") );
 	const stacks = [];
 	const fill = parent.querySelector( "#clock-game" );
-	const dragControl = new card_drag_control( parent );
+	const controls = parent.querySelector( "#controls" );
+	const dragControl = new card_drag_control( fill );
 	// use useBoard.name 
 	const foundations = [];
 	let first = true;
@@ -30,6 +31,7 @@ export function setup( parent, options ) {
 			first = true;
 		}
 		stack.dragControl = dragControl;
+		
 		stack.append( fill );
 		stacks.push( stack );
 		const snum = Number( stack.name );
@@ -99,11 +101,11 @@ export function setup( parent, options ) {
 		newGame();
 	})
 
-	popups.makeButton( fill, "New Game", newGame, {suffix:"new-game"} );
-	popups.makeCheckbox( fill, useBoard, "autoPlayFoundation", "Auto Play to Foundation" )
-	popups.makeCheckbox( fill, useBoard, "autoPlayTableau", "Auto Play from Tableau" )
-	popups.makeCheckbox( fill, useBoard, "autoPlayDiscard", "Auto Play from Discard" )
-	const change4 = popups.makeCheckbox( fill, useBoard, "autoDraw", "Auto Draw" );
+	popups.makeButton( controls, "New Game", newGame, {suffix:"new-game"} );
+	popups.makeCheckbox( controls, useBoard, "autoPlayFoundation", "Auto Play to Foundation" )
+	popups.makeCheckbox( controls, useBoard, "autoPlayTableau", "Auto Play from Tableau" )
+	popups.makeCheckbox( controls, useBoard, "autoPlayDiscard", "Auto Play from Discard" )
+	const change4 = popups.makeCheckbox( controls, useBoard, "autoDraw", "Auto Draw" );
 	change4.on("change", ()=>{ if( useBoard.autoDraw ){
 
 	} } );

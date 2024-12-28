@@ -156,7 +156,9 @@ class CardStack extends Events {
 		return card;
 	}
 	get top() {
-		return this.cards;
+		let c = this.cards;
+		while( c && c.flags.bFloating ) c = c.next;
+		return c;
 	}
 	playTo( stack ) {
 		if( this.cards ) {
@@ -279,8 +281,10 @@ class CardStack extends Events {
 	}	
 
 	turnTopCard() {
-		if( this.cards )
-			this.cards.flags.bFaceDown = false;
+		let c = this.cards;
+		while( c && c.flags.bFloating ) c = c.next;
+		if( c )
+			c.flags.bFaceDown = false;
 		//this.update();
 	}
 

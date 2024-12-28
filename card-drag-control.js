@@ -55,7 +55,6 @@ export class card_drag_control extends Events {
 			  const { width, height } = entry.contentRect;
 			  //console.log('Size changed:', width, height);
 			  if( !width || !height ) return;
-
 				this.canvas.width = width;
 				this.canvas.height = height;
 				this.draw();
@@ -75,10 +74,21 @@ export class card_drag_control extends Events {
 				this.startOfs = 0;
 			}
 			to.control.updateCards();
-			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
-			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
-			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
-			
+			this.addMove( { x: this.canvas.width * from.control.x / 100
+			                     + from.control.image_width * card.wasAt.x / 100
+			              , y: this.canvas.height * from.control.y / 100
+			                     + from.control.image_height * card.wasAt.y / 100
+			              , stack: from
+			} // from
+			            , { x: this.canvas.width * to.control.x / 100
+			                     + to.control.image_width * card.at.x / 100
+			              , y: this.canvas.height * to.control.y / 100
+			                     + to.control.image_height * card.at.y / 100
+			              , stack: to
+			              }
+			            , this.startOfs + performance.now() / 1000
+			            , this.startOfs + performance.now() / 1000 + 0.32, card );
+
 			this.startOfs += this.startDelay;
 		} );
 		stack.stack.on( "play", (from,to,card)=>{
@@ -87,9 +97,19 @@ export class card_drag_control extends Events {
 				this.startOfs = 0;
 			}
 			to.control.updateCards();
-			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
-			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
-			            , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
+			this.addMove( { x: this.canvas.width * from.control.x / 100
+			                     + from.control.image_width * card.wasAt.x / 100
+			              , y: this.canvas.height * from.control.y / 100
+			                     + from.control.image_height * card.wasAt.y / 100
+			              , stack: from
+			} // from
+			            , { x: this.canvas.width * to.control.x / 100
+			                     + to.control.image_width * card.at.x / 100
+			              , y: this.canvas.height * to.control.y / 100
+			                     + to.control.image_height * card.at.y / 100
+			              , stack: to
+			              }
+						  , this.startOfs + performance.now()/1000, this.startOfs + performance.now()/1000 + 0.32, card );
 			this.startOfs += this.startDelay;
 		} );
 		stack.stack.on( "move", (from,to,card,delay)=>{
@@ -102,8 +122,18 @@ export class card_drag_control extends Events {
 			to.control.updateCards();
 			const turn = this.turning.find( (t)=>t.card === card );
 			const extraDelay = turn?turn.end-performance.now()/1000+0.005:0;
-			this.addMove( {x:from.control.x+card.wasAt.x, y:from.control.y+card.wasAt.y, stack:from}
-			            , {x:to.control.x  +card.at.x   , y:to.control.y+card.at.y     , stack:to}
+			this.addMove( { x: this.canvas.width * from.control.x / 100
+			                     + from.control.image_width * card.wasAt.x / 100
+			              , y: this.canvas.height * from.control.y / 100
+			                     + from.control.image_height * card.wasAt.y / 100
+			              , stack: from
+			} // from
+			            , { x: this.canvas.width * to.control.x / 100
+			                     + to.control.image_width * card.at.x / 100
+			              , y: this.canvas.height * to.control.y / 100
+			                     + to.control.image_height * card.at.y / 100
+			              , stack: to
+			              }
 			            , this.startOfs + performance.now()/1000 + extraDelay, this.startOfs + performance.now()/1000 + extraDelay + (delay||0.32), card );
 			this.startOfs += this.startDelay;
 		} );
@@ -365,9 +395,11 @@ export class card_drag_control extends Events {
 					const show = Math.sin(Math.PI/2*(cardDel - 0.5)*2);
 					//console.log( "Fliped, showing front now... ", show, cardDel, turn.card.flags.bFaceDown?52:turn.card.id )
 					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
-						, turn.card.thisStack.control.px + turn.card.thisStack.control.canvas.width * ( turn.card.at.x ) /100
-						, turn.card.thisStack.control.py + turn.card.thisStack.control.canvas.height * ( turn.card.at.y) /100
-							+ (h/2)*(1-show)
+						, this.canvas.width * ( turn.card.thisStack.control.x  ) /100
+						+ turn.card.thisStack.control.image_width * turn.card.at.x / 100
+						, this.canvas.height * ( turn.card.thisStack.control.y )/100
+						+ turn.card.thisStack.control.image_height * turn.card.at.y /100
+								+ (h/2)*(1-show)
 						, w
 						, h*show );
 
@@ -375,17 +407,21 @@ export class card_drag_control extends Events {
 					const show = Math.sin(Math.PI/2*(cardDel)*2);
 					//console.log( "Flip show: (showing back?)", show, cardDel, turn.card.flags.bFaceDown?turn.card.id:52 );
 					this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?turn.card.id:52]
-						, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
-						, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
-									+ (h/2)*(show)
+						, this.canvas.width * ( turn.card.thisStack.control.x  ) /100
+						+ turn.card.thisStack.control.image_width * turn.card.at.x / 100
+						, this.canvas.height * ( turn.card.thisStack.control.y )/100
+						+ turn.card.thisStack.control.image_height * turn.card.at.y /100
+										+ (h/2)*(show)
 								, w
 								, h*(1-show) );
 
 				}
 			} else {
 				this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
-					, this.canvas.width * ( turn.card.thisStack.control.x + turn.card.at.x ) /100
-					, this.canvas.height * ( turn.card.thisStack.control.y + turn.card.at.y) /100
+					, this.canvas.width * ( turn.card.thisStack.control.x  ) /100
+					+ turn.card.thisStack.control.image_width * turn.card.at.x / 100
+					, this.canvas.height * ( turn.card.thisStack.control.y )/100
+					+ turn.card.thisStack.control.image_height * turn.card.at.y /100
 						
 					, w
 					, h );
@@ -409,16 +445,16 @@ export class card_drag_control extends Events {
 				const cardDel = (ms - move.start)/(move.end-move.start);
 				//console.log( "Moving card:", cardDel, move.card.name );
 				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
-								, this.canvas.width * ( (1-cardDel)*move.from.x + (cardDel)*move.to.x ) /100
-								, this.canvas.height * ( (1-cardDel)*move.from.y + (cardDel)*move.to.y) /100
+								, (1-cardDel)*move.from.x + (cardDel)*move.to.x
+								,  (1-cardDel)*move.from.y + (cardDel)*move.to.y
 								, (move.from.stack.control.card_width*(1-cardDel))+(cardDel*move.to.stack.control.card_width)
 								, ((move.from.stack.control.card_height*(1-cardDel))+ ( cardDel*move.to.stack.control.card_height)) );
 
 				
 			} else {
 				this.ctx.drawImage( cimg[move.card.flags.bFaceDown?52:move.card.id]
-					, this.canvas.width * ( move.from.x  ) /100
-					, this.canvas.height * ( move.from.y ) /100
+					,  ( move.from.x  )
+					,  ( move.from.y ) 
 					, move.from.stack.control.card_width
 					, move.from.stack.control.card_height );
 
