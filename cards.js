@@ -250,6 +250,7 @@ class CardStack extends Events {
 		let lastCard = to.cards;
 		while( lastCard && lastCard.next )
 			lastCard = lastCard.next;
+		if( lastCard )
 		while( card = tmpStack.cards )
 		{
 			card.flags.bFloating = true;
@@ -258,7 +259,6 @@ class CardStack extends Events {
 				card.next.me.ref = card.me.ref;
 				card.next.me.field = card.me.field;
 			}
-			
 			lastCard.next = card;
 
 			card.me.ref = lastCard;
