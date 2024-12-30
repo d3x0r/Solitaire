@@ -171,6 +171,8 @@ export class card_stack_control {
 
 	frame = document.createElement ("div" );
 	canvas = document.createElement ("canvas" );
+	offsetLeft = 0;
+	offsetTop = 0;
 	ctx = this.canvas.getContext ("2d" );
 
 	constructor( options ) {
@@ -210,6 +212,16 @@ export class card_stack_control {
 				this.canvas.height = height;
 				this.top = realRect.top;
 				this.left = realRect.left;
+
+				this.offsetLeft = this.canvas.offsetLeft;
+				let p;
+				for( p = this.canvas.parentNode; p; p = p.parentNode || p.host ){
+					this.offsetLeft += p.offsetLeft||0;
+				}
+				this.offsetTop = this.canvas.offsetTop;
+				for( let p = this.canvas.parentNode; p; p = p.parentNode || p.host ){
+					this.offsetTop += p.offsetTop||0;
+				}
 
 				if( !this.flags.bVertical ) {
 					this.card_width = width - ( ( this.cards_wide - 1 ) * this.step_x ) / 100 * width;
@@ -282,13 +294,13 @@ export class card_stack_control {
 			for( let touch of e.changedTouches ){
 				const old = this.touches.find( (t)=> t.ID === touch.identifier );
 				if( old ) {
-					old.x = touch.clientX - this.canvas.offsetLeft;
-					old.y = touch.clientY - this.canvas.offsetTop;
+					old.x = touch.clientX - this.offsetLeft;
+					old.y = touch.clientY - this.offsetTop;
 					old.new = true;
 				} else {
 					this.touches.push( {ID:touch.identifier,
-						x : touch.clientX - this.canvas.offsetLeft,
-						y : touch.clientY - this.canvas.offsetTop,
+						x : touch.clientX - this.offsetLeft,
+						y : touch.clientY - this.offsetTop,
 						new : true
 					})
 				}
@@ -304,8 +316,8 @@ export class card_stack_control {
 			for( let touchChanged of e.changedTouches ){
 			  var touch = this.touches.find( (t)=> t.ID === touchChanged.identifier );
 			  if( touch ) {
-				touch.x = touchChanged.clientX- this.canvas.offsetLeft;
-				touch.y = touchChanged.clientY- this.canvas.offsetTop;
+				touch.x = touchChanged.clientX- this.offsetLeft;
+				touch.y = touchChanged.clientY- this.offsetTop;
 			  }
 			  //console.log( "Move touch...(oh can't see this" );
 			}
@@ -324,7 +336,7 @@ export class card_stack_control {
 				//else console.log( "A touch ended that never started?" );
 			}
 			if( this.active.nCardsSelected ) {	
-				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 0 );
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.offsetLeft, this.touchy + this.offsetTop, 0 );
 				this.#dragControl._b = 0;
 
 			}
@@ -355,7 +367,7 @@ export class card_stack_control {
 			this.touchy = t.y;
 			card_stack_control.mouse( this, this.touchx, this.touchy, this.b );
 			if( this.active.nCardsSelected ) {
-				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 1 );
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.offsetLeft, this.touchy + this.offsetTop, 1 );
 				this.#dragControl._b = 1;
 			}
 		  }
@@ -365,7 +377,7 @@ export class card_stack_control {
 			this.b = 0;
 			card_stack_control.mouse( this, this.touchx, this.touchy, this.b );
 			if( this.active.nCardsSelected ) {	
-				card_drag_control.mouse( this.#dragControl, this.touchx + this.canvas.offsetLeft, this.touchy + this.canvas.offsetTop, 0 );
+				card_drag_control.mouse( this.#dragControl, this.touchx + this.offsetLeft, this.touchy + this.offsetTop, 0 );
 				this.#dragControl._b = 0;
 			}
 		}
@@ -374,8 +386,9 @@ export class card_stack_control {
 
 
 	mouse( type, evt ) {
-		let x = evt.clientX - this.canvas.offsetLeft;
-		let y = evt.clientY - this.canvas.offsetTop;
+		const into = evt.target.getBoundingClientRect();
+		let x = evt.clientX - into.left;//this.offsetLeft;
+		let y = evt.clientY - into.top;
 		this._b = this.b;
 		this.mx = x;
 		this.my = y;
@@ -1006,6 +1019,8 @@ export class card_stack_control {
 		//MyValidatedControlData( struct card_stack_control *, stack, (PSI_CONTROL)pc );
 		// what can I do with a mouse?
 		// I can drraw on a frame... I don't need to be a control...
+		//msg.textContent = `mouse : ${x} ${x/stack.canvas.width*100} ${y} ${y/stack.canvas.height*100} ${b}`;
+
 		if( !stack.game ) return;
 		//console.log( "Static mouse event:", stack.stack.name, x, y, b );
 		if( ( b & 1 ) && !( stack._b & 1 ) )
@@ -1024,16 +1039,16 @@ export class card_stack_control {
 					stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 				} else if( stack.flags.bTurnToDiscard ) {
 					if( stack.flags.bTurn3ToDiscard ) {
-						//stack.#dragControl.startDelay = 0.5;
+						stack.#dragControl.startDelay = 0.150;
 						for( let n = 0; n < 3; n++ ) {
 							const turned = card_stack.turnTopCard();
 							if( turned )
-								stack.#dragControl.addTurn( turned, 0, 0.25 );
+								stack.#dragControl.addTurn( turned, 0, 0.125 );
 
 							//const stack_to = stack.#deck.getStack("Discard")
 							//card_stack.transfer( stack_to, 1 );
 						}
-						//stack.#dragControl.startDelay = 0.025;
+						stack.#dragControl.startDelay = 0.025;
 					} else {
 						const turned = card_stack.turnTopCard();
 						if( turned )

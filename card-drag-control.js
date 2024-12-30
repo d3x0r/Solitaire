@@ -237,8 +237,9 @@ export class card_drag_control extends Events {
 	  
 
 	mouse( type, evt ) {
-		let x = evt.clientX - this.canvas.offsetLeft;
-		let y = evt.clientY - this.canvas.offsetTop;
+		const into = evt.target.getBoundingClientRect();
+		let x = evt.clientX - into.left;//this.canvas.offsetLeft;
+		let y = evt.clientY - into.top;//this.canvas.offsetTop;
 		this._b = this.b;
 		this.mx = x;
 		this.my = y;
@@ -254,6 +255,7 @@ export class card_drag_control extends Events {
 	}
 
 	static mouse( self, x, y, b ) {
+
 		msg.textContent=( "Drag event:"+x+","+y+","+b+" " + self.ofsx+","+self.ofsy );
 		if( !(self._b & 1) && (b & 1) ) {
 			self.setDrag( x, y );
@@ -306,10 +308,11 @@ export class card_drag_control extends Events {
 	}
 
 	select( stack, cards, cx, cy, mx, my ) {
+		const into = this.canvas.getBoundingClientRect();
 		this.cardx = cx;
 		this.cardy = cy;
-		this.mx = mx;
-		this.my = my;
+		this.mx = mx - into.left;
+		this.my = my - into.top;
 		this.ofsx = mx;
 		this.ofsy = my;
 		this.cards = cards;
@@ -417,7 +420,7 @@ export class card_drag_control extends Events {
 
 				}
 			} else {
-				this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?52:turn.card.id]
+				this.ctx.drawImage( cimg[turn.card.flags.bFaceDown?turn.card.id:52]
 					, this.canvas.width * ( turn.card.thisStack.control.x  ) /100
 					+ turn.card.thisStack.control.image_width * turn.card.at.x / 100
 					, this.canvas.height * ( turn.card.thisStack.control.y )/100

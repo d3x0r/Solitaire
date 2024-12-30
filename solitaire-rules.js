@@ -19,7 +19,7 @@ const clock_board = {
     name : "Clock",
 	autoPlayFoundation : true,
 	autoPlayTableau : true,
-	autoPlayDiscard : true,
+	autoPlayDiscard : false,
 	autoDraw : false,
 	dragDelay : 0,
 	_1 :  new card_stack_control({
@@ -878,7 +878,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 8,
@@ -900,7 +900,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 8,
@@ -922,7 +922,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 7,
@@ -944,7 +944,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 7,
@@ -964,7 +964,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 7,
@@ -986,7 +986,7 @@ const freecell_board = {
 			bVertical : true,
 			bOnlyKingWhenEmpty : true,
 			bLastAce: true,
-			bAlternateSuit: true,
+			bAlternateSuit: false,
 		},
 		startup: {
 			nDrawAtStart : 7,

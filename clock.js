@@ -134,11 +134,11 @@ export function setup( parent, options ) {
 			{
 				const t = lastCard.thisStack;
 				if( t.top.flags.bFaceDown ) {
-					dragControl.addTurn( t.top, 0, 0.125 );
-					t.turnTopCard();
+					const turned = t.turnTopCard();
+					dragControl.addTurn( turned, 0, 0.125 );
 					if( useBoard.autoPlayDiscard ) {
 						// don't wait for animation to end... we know where it's going... and what to flip.
-						autoPlay( t.top, false, true );
+						autoPlay( turned, false, true );
 					} else first = true;
 				}
 			}
