@@ -1024,18 +1024,20 @@ export class card_stack_control {
 					stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
 				} else if( stack.flags.bTurnToDiscard ) {
 					if( stack.flags.bTurn3ToDiscard ) {
-						stack.#dragControl.startDelay = 0.5;
+						//stack.#dragControl.startDelay = 0.5;
 						for( let n = 0; n < 3; n++ ) {
-							card_stack.turnTopCard();
-							stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
+							const turned = card_stack.turnTopCard();
+							if( turned )
+								stack.#dragControl.addTurn( turned, 0, 0.25 );
 
 							//const stack_to = stack.#deck.getStack("Discard")
 							//card_stack.transfer( stack_to, 1 );
 						}
-						stack.#dragControl.startDelay = 0.025;
+						//stack.#dragControl.startDelay = 0.025;
 					} else {
-						card_stack.turnTopCard();
-						stack.#dragControl.addTurn( card_stack.top, 0, 0.25 );
+						const turned = card_stack.turnTopCard();
+						if( turned )
+						stack.#dragControl.addTurn( turned, 0, 0.25 );
 						// update?
 						//const stack_to = stack.#deck.getStack("Discard")
 						//card_stack.transfer( stack_to, 1 );
