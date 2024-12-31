@@ -197,7 +197,7 @@ export class card_drag_control extends Events {
 			}
 		}
 		}
-		console.log( "touch from touch layer...");
+		//console.log( "touch from touch layer...");
 		this.touchUpdate();
 	}
 
@@ -285,7 +285,7 @@ export class card_drag_control extends Events {
 		//}
 		if( !( self._b & 1 ) && ( b & 1 ) ) {
 			self.drag( x - self.stack.mx, y - self.stack.my );
-			console.log( "Drag" );
+			//console.log( "Drag" );
 		}
 		if( ( self._b & 1 ) && !( b & 1 ) ) {
 			// self.stopDrag( x, y );
