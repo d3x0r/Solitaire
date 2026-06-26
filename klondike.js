@@ -54,7 +54,6 @@ export function setup( parent, options ) {
 		deck.autoPlay(card, false, true);
 	} );
 
-	
 	const newGame = () => {
 
 		const game = card_game.getGame( useBoard.name );
@@ -92,8 +91,10 @@ export function setup( parent, options ) {
 		dealtTo.forEach( stack => {stack.draw()})
 		draw.control.draw();
 	}
+	newGame();
 
 	deck.on("lose", ()=>{
+		console.log( "Why don't I get here?" );
 		newGame();
 	})
 	if( !options.fullAuto )
