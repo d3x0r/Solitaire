@@ -21,9 +21,8 @@
 // rootId
 import {setup} from "./klondike.js";
 import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
-
-const myGameDiv = popups.getFilledParent( rootId );
-const frame = myGameDiv.host;//getRootNode();
+const myGameDiv =  (typeof rootId !== 'undefined')?popups.getFilledParent( rootId ): document.body;
+const frame = (typeof rootId !== 'undefined')?myGameDiv.host:myGameDiv;//getRootNode();
 if( frame.classList.contains ( "auto" ))
 	setup( myGameDiv, {fullAuto:true} );
 else

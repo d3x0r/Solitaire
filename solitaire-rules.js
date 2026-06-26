@@ -1,11 +1,13 @@
 
 import {card_stack_control} from "./card-stack-control.js"
+import {SaltyRNG} from "./node_modules/@d3x0r/srg2/salty_random_generator2.mjs"
 
 const step_y = 2;
 const step_x = 2;
 
 class Board {
 	name= "boardName";
+	score = 0; // this keeps the current score of a game.
 	autoPlayFoundation = true;
 	autoPlayTableau = true;
 	autoPlayDiscard = true;
@@ -21,6 +23,7 @@ const clock_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : false,
 	autoDraw : false,
+	score : 0, // this keeps the current score of a game.
 	dragDelay : 0,
 	_1 :  new card_stack_control({
 		flags : {
@@ -331,6 +334,7 @@ const clover_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : true,
 	autoDraw : false,
+	score : 0, // this keeps the current score of a game.
 	dragDelay : 0.025,
     acePile1 : new card_stack_control({
 		flags : {
@@ -785,6 +789,7 @@ const freecell_board = {
 	autoPlayTableau : true,
 	autoPlayDiscard : true,
 	autoDraw : false,
+	score : 0, // this keeps the current score of a game.
 	dragDelay : 0.025,
     acePile1 : new card_stack_control({
 		flags : {
@@ -1337,7 +1342,7 @@ autoPlayFoundation : false,
 autoPlayTableau : false,
 autoPlayDiscard : false,
 autoDraw : false,
-dragDelay : 0.025,
+	dragDelay : 0.025,
 	acePile1 : new card_stack_control({
 	flags : {
 		bVertical : true,
@@ -1640,17 +1645,46 @@ discardPile : new card_stack_control({
 
 
 
+// Fix Clover Leaf rank rules — bSameSuit alone is not enough; need rank-check flags.
+// Table fans: only top card moveable, must be one lower same suit.
+// Ace piles: must be one higher same suit.
+for( const [key, val] of Object.entries( clover_board ) ) {
+	if( typeof val !== 'object' || !val.flags ) continue;
+	if( key.startsWith('acePile') ) {
+		val.flags.bOnlyPlusOne = true;
+	}
+	if( key.startsWith('table') ) {
+		val.flags.bOnlyMinusOne = true;
+		val.flags.bSelectOnlyTop = true;
+	}
+}
+
+// Fix FreeCell tableau — all piles should alternate suit, not just pile 1.
+for( const [key, val] of Object.entries( freecell_board ) ) {
+	if( typeof val !== 'object' || !val.flags ) continue;
+	if( key.startsWith('boardPile') ) val.flags.bAlternateSuit = true;
+}
+
+const boardScalars = ["name","dragDelay","autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard","score","seed"];
+
 export function clone( board ) {
-	const clone = {};
+	const clone = {
+		score : 0,
+		seed : null,
+	};
 	clone.name = board.name;
 	for( let stack in board){
-		if( ["name","dragDelay", "autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stack ) ) {
+		if( boardScalars.includes( stack ) ) {
 			clone[stack] = board[stack];
 			continue;
 		}
 		clone[stack] = new card_stack_control( board[stack] );
 	}
 	return clone;
+}
+
+export function newSeed() {
+	return SaltyRNG.id();
 }
 
 const klondike3_board = clone(klondike_board);

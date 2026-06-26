@@ -533,13 +533,14 @@ class Deck extends Events {
 			stack.add( pCard );
 	}
 
-	shuffle()
+	shuffle( rng )
 	{
 		let tree = null;
 		let card;
 		// assume everything to gather has been gathered
 		const stack = this.getStack( "Draw" );
-		
+		const rand = rng ? () => rng.getBits(16) : Math.random;
+
 		while( card = stack.cards )
 		{
 			if( card.me.ref[card.me.field] = card.next ) {
@@ -548,9 +549,9 @@ class Deck extends Events {
 			}
 			card.next = null;
 			card.me.ref = null;
-			tree = sort( tree, card, Math.random() );
+			tree = sort( tree, card, rand() );
 		}
-	
+
 		FoldTree( { ref:stack, field: "cards" }, tree );
 		stack.update();
 	}

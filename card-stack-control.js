@@ -193,7 +193,7 @@ export class card_stack_control {
 		Object.assign( this.active, options.active );
 		[ 'deck_stack', 'step_x', 'step_y', 'fd_step_x', 'fd_step_y', 'x', 'y'
 		  , 'cards_wide', 'cards_high', , 'width', 'height' ]
-		     .forEach( ( key ) => { this[ key ] = options[ key ]; } );
+		     .forEach( ( key ) => { if( options[key] !== undefined ) this[ key ] = options[ key ]; } );
 		// at this point could pretend do to do some setup of the position?
 		// this is setting information about the canavas (Surface/output image)
 		// and cards (images)

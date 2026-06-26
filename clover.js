@@ -1,5 +1,6 @@
 
-import {clone,clover_board} from "./solitaire-rules.js";
+import {clone,clover_board,newSeed} from "./solitaire-rules.js";
+import {SaltyRNG} from "./node_modules/@d3x0r/srg2/salty_random_generator2.mjs";
 import {card_drag_control} from "./card-drag-control.js"
 import {card_stack_control} from "./card-stack-control.js"
 import {popups} from "./node_modules/@d3x0r/popups/popups.mjs";
@@ -24,7 +25,7 @@ export function setup( parent, options ) {
 
 	dragControl.startDelay = useBoard.dragDelay;
 	for( let stackName of Object.keys( useBoard ) ){
-		if( ["name","dragDelay", "autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stackName ) ) continue;
+		if( ["score","seed","name","dragDelay", "autoDraw","autoPlayFoundation","autoPlayTableau","autoPlayDiscard"].includes( stackName ) ) continue;
 		const stack = useBoard[stackName];
 		// this is magic.
 		stack.deck = deck;
@@ -65,7 +66,9 @@ export function setup( parent, options ) {
 		}
 		deck.autoPlay = autoPlay;
 		deck.gather();
-		deck.shuffle();
+		useBoard.seed = newSeed();
+		const rng = new SaltyRNG( (salt) => salt.push( useBoard.seed ) );
+		deck.shuffle( rng );
 		deck.deals = 0;
 		let c = 0;
 		let isDealing = true;

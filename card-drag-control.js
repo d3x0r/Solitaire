@@ -80,6 +80,20 @@ export class card_drag_control extends Events {
 		resizeObserver.observe( this.canvas );
 	}
 
+	// Resolve a move endpoint to pixel coords using current canvas size.
+	// Endpoints are stored as {stack, cardAt:{x,y}} (dynamic) or
+	// {fixedX, fixedY, stack} (baked, used for drag-drop from-position).
+	resolvePos( ep ) {
+		if( ep.fixedX !== undefined )
+			return { x: ep.fixedX, y: ep.fixedY };
+		return {
+			x: this.canvas.width  * ep.stack.control.x / 100
+			     + ep.stack.control.image_width  * ep.cardAt.x / 100,
+			y: this.canvas.height * ep.stack.control.y / 100
+			     + ep.stack.control.image_height * ep.cardAt.y / 100,
+		};
+	}
+
 	add( stack ) {
 		this.stacks.push( stack );
 		stack.stack.on( "deal", ( from, to, card ) => {
@@ -88,21 +102,11 @@ export class card_drag_control extends Events {
 				this.startOfs = 0;
 			}
 			to.control.updateCards();
-			this.addMove( { x: this.canvas.width * from.control.x / 100
-			                     + from.control.image_width * card.wasAt.x / 100
-			              , y: this.canvas.height * from.control.y / 100
-			                     + from.control.image_height * card.wasAt.y / 100
-			              , stack: from
-			} // from
-			            , { x: this.canvas.width * to.control.x / 100
-			                     + to.control.image_width * card.at.x / 100
-			              , y: this.canvas.height * to.control.y / 100
-			                     + to.control.image_height * card.at.y / 100
-			              , stack: to
-			              }
+			// Snapshot card offsets now (they change); canvas size resolves each frame.
+			this.addMove( { stack: from, cardAt: { x: card.wasAt.x, y: card.wasAt.y } }
+			            , { stack: to,   cardAt: { x: card.at.x,    y: card.at.y    } }
 			            , this.startOfs + performance.now() / 1000
 			            , this.startOfs + performance.now() / 1000 + 0.32, card );
-
 			this.startOfs += this.startDelay;
 		} );
 		stack.stack.on( "play", ( from, to, card ) => {
@@ -111,18 +115,8 @@ export class card_drag_control extends Events {
 				this.startOfs = 0;
 			}
 			to.control.updateCards();
-			this.addMove( { x: this.canvas.width * from.control.x / 100
-			                     + from.control.image_width * card.wasAt.x / 100
-			              , y: this.canvas.height * from.control.y / 100
-			                     + from.control.image_height * card.wasAt.y / 100
-			              , stack: from
-			} // from
-			            , { x: this.canvas.width * to.control.x / 100
-			                     + to.control.image_width * card.at.x / 100
-			              , y: this.canvas.height * to.control.y / 100
-			                     + to.control.image_height * card.at.y / 100
-			              , stack: to
-			              }
+			this.addMove( { stack: from, cardAt: { x: card.wasAt.x, y: card.wasAt.y } }
+			            , { stack: to,   cardAt: { x: card.at.x,    y: card.at.y    } }
 			            , this.startOfs + performance.now() / 1000
 			            , this.startOfs + performance.now() / 1000 + 0.32, card );
 			this.startOfs += this.startDelay;
@@ -138,18 +132,20 @@ export class card_drag_control extends Events {
 			const turn = this.turning.find( ( t ) => t.card === card );
 			const extraDelay
 			     = turn ? turn.end - performance.now() / 1000 + 0.005 : 0;
-			this.addMove( { x: this.canvas.width * from.control.x / 100
-			                     + from.control.image_width * card.wasAt.x / 100
-			              , y: this.canvas.height * from.control.y / 100
-			                     + from.control.image_height * card.wasAt.y / 100
-			              , stack: from
-			} // from
-			            , { x: this.canvas.width * to.control.x / 100
-			                     + to.control.image_width * card.at.x / 100
-			              , y: this.canvas.height * to.control.y / 100
-			                     + to.control.image_height * card.at.y / 100
-			              , stack: to
-			              }
+			// If this card was being dragged, bake the from-position from the drop
+			// location (already resolved pixels). Otherwise store stack ref so it
+			// recomputes each frame if the layout changes mid-animation.
+			const wasDragged = this.cards && this.cards.includes( card );
+			const fromEp = wasDragged
+			     ? { fixedX: this.cardx + ( this.mx - this.ofsx )
+			                      + from.control.image_width  * card.at.x / 100
+			       , fixedY: this.cardy + ( this.my - this.ofsy )
+			                      + from.control.image_height * card.at.y / 100
+			       , stack: from
+			       }
+			     : { stack: from, cardAt: { x: card.wasAt.x, y: card.wasAt.y } };
+			this.addMove( fromEp
+			            , { stack: to, cardAt: { x: card.at.x, y: card.at.y } }
 			            , this.startOfs + performance.now() / 1000 + extraDelay
 			            , this.startOfs + performance.now() / 1000 + extraDelay
 			                   + ( delay || 0.32 )
@@ -329,8 +325,13 @@ export class card_drag_control extends Events {
 			}
 			if( self.cards )
 			for( let card of self.cards ) {
-				card.flags.bFloating = false;
-				card.thisStack.control.draw();
+				// Cards that were successfully moved are in self.moving and will
+				// have bFloating cleared when their animation lands.
+				// Only clear here for cards that weren't moved (invalid drop).
+				if( !self.moving.find( m => m.card === card ) ) {
+					card.flags.bFloating = false;
+					card.thisStack.control.draw();
+				}
 			}
 			self.cards = null;
 			//console.log( "Removing active from drag layer");
@@ -504,24 +505,27 @@ export class card_drag_control extends Events {
 				// console.log( "last card pos was to:", move.card.id, move.card.at,
 				// move );
 				idx--;
-			} else if( move.start < ms ) {
-				const cardDel = ( ms - move.start ) / ( move.end - move.start );
-				// console.log( "Moving card:", cardDel, move.card.name );
-				this.ctx.drawImage(
-				     cimg[ move.card.flags.bFaceDown ? 52 : move.card.id ]
-				     , ( 1 - cardDel ) * move.from.x + ( cardDel ) * move.to.x
-				     , ( 1 - cardDel ) * move.from.y + ( cardDel ) * move.to.y
-				     , ( move.from.stack.control.card_width * ( 1 - cardDel ) )
-				            + ( cardDel * move.to.stack.control.card_width )
-				     , ( ( move.from.stack.control.card_height * ( 1 - cardDel ) )
-				       + ( cardDel * move.to.stack.control.card_height ) ) );
-
 			} else {
-				this.ctx.drawImage(
-				     cimg[ move.card.flags.bFaceDown ? 52 : move.card.id ]
-				     , ( move.from.x ), ( move.from.y )
-				     , move.from.stack.control.card_width
-				     , move.from.stack.control.card_height );
+				const fromPos = this.resolvePos( move.from );
+				const toPos   = this.resolvePos( move.to );
+				if( move.start < ms ) {
+					const cardDel = ( ms - move.start ) / ( move.end - move.start );
+					// console.log( "Moving card:", cardDel, move.card.name );
+					this.ctx.drawImage(
+					     cimg[ move.card.flags.bFaceDown ? 52 : move.card.id ]
+					     , ( 1 - cardDel ) * fromPos.x + cardDel * toPos.x
+					     , ( 1 - cardDel ) * fromPos.y + cardDel * toPos.y
+					     , ( move.from.stack.control.card_width * ( 1 - cardDel ) )
+					            + ( cardDel * move.to.stack.control.card_width )
+					     , ( ( move.from.stack.control.card_height * ( 1 - cardDel ) )
+					       + ( cardDel * move.to.stack.control.card_height ) ) );
+				} else {
+					this.ctx.drawImage(
+					     cimg[ move.card.flags.bFaceDown ? 52 : move.card.id ]
+					     , fromPos.x, fromPos.y
+					     , move.from.stack.control.card_width
+					     , move.from.stack.control.card_height );
+				}
 			}
 		}
 
