@@ -9,7 +9,7 @@ import {getStandardDeck} from "./cards.js";
 
 
 export function setup( parent, options ) {
-	options = options || { draw3 : false, fullAuto : true };
+	options = options || { draw3 : false, fullAuto : false };
 	// the name should change after clone... (maybe extend clone?)
 	const useBoard = clone( options.draw3 ? klondike3_board : klondike_board );
 	let deck = getStandardDeck( useBoard.name = useBoard.name + (options.fullAuto?"(auto)":"(manual)") );
@@ -96,31 +96,41 @@ export function setup( parent, options ) {
 	deck.on("lose", ()=>{
 		newGame();
 	})
-
+	if( !options.fullAuto )
+		newGame();
 	popups.makeButton( controls, "New Game", newGame, {suffix:"new-game"} );
-	popups.makeCheckbox( controls, useBoard, "autoPlayFoundation", "Auto Play to Foundation" )
-	popups.makeCheckbox( controls, useBoard, "autoPlayTableau", "Auto Play from Tableau" )
-	popups.makeCheckbox( controls, useBoard, "autoPlayDiscard", "Auto Play from Discard" )
-	const change4 = popups.makeCheckbox( controls, useBoard, "autoDraw", "Auto Draw" );
-	change4.on("change", ()=>{ if( useBoard.autoDraw ){
 
-	} } );
+	const autoPlay1 = popups.makeCheckbox( controls, useBoard, "autoPlayFoundation", "Auto Play to Foundation" );
+	autoPlay1.on("change", ()=>{
+		autoPlay( discard.stack.top, false, false );
+	} );
+	const autoPlay2 = popups.makeCheckbox( controls, useBoard, "autoPlayTableau", "Auto Play to Tableau" )
+	autoPlay2.on("change", ()=>{
+		autoPlay( discard.stack.top, false, false );
+	} );
+	//popups.makeCheckbox( controls, useBoard, "autoPlayDiscard", "Auto Play from Discard" )
+	const change4 = popups.makeCheckbox( controls, options, "fullAuto", "Auto Draw" );
+	change4.on("change", ()=>{ 
+		autoPlay( discard.stack.top, false, false );
+	} );
 	
 	function autoPlay( lastCard, wasFloat, wasFlip ) {
-		if( lastCard.flags.bFaceDown ) return; 
+		let couldPlay = false;  // goes true if something could have played
+		let couldPlayLast = false; // goes true, if lastCard could have played
+		if( lastCard && lastCard.flags.bFaceDown ) return; 
 		//console.log( "time to make a new move...", lastCard );
 
-		if( wasFlip ) {
+		if( lastCard && wasFlip ) {
 			if( lastCard.thisStack === drawPile.stack ) {
-				console.log( "Card flipped, move to discard...");
+				//console.log( "Card flipped, move to discard...");
 				drawPile.stack.transfer( discard.stack, 1, 0.125 );
 				return;
 			}
 		}
 
 		if( (!drawPile.stack.top || !drawPile.stack.top.flags.bFloating )
-			&& !lastCard.thisStack.top.flags.bFloating 
-			&& lastCard.thisStack.name == "Discard" ) {
+			&& ( lastCard && !lastCard.thisStack.top.flags.bFloating 
+					&& lastCard.thisStack.name == "Discard" ) ) {
 		
 			if( lastCard.me.ref !== lastCard.thisStack ) {
 				console.log( "Card played too soon....");
@@ -128,25 +138,30 @@ export function setup( parent, options ) {
 			}
 			//console.log( "Play to..." );
 			lastCard.thisStack.control.SelectCards( 1, true );
-			for( let f of foundations ) {
-				
-				if( card_stack_control.CanMoveCards( lastCard.thisStack.control, f ) ) {
-					lastCard.thisStack.control.DoMoveCards( f );
-					//console.log( "Played from discard to foundation...." );
-					return;
-				} 
-			}
-			for( let f of tableau ) {
-				if( card_stack_control.CanMoveCards( lastCard.thisStack.control, f ) ) {
-					lastCard.thisStack.control.DoMoveCards( f );
-					//console.log( "Played from discard to tableau...." );
-					return;
-				} 
-			}
+				for( let f of foundations ) {
+					if( card_stack_control.CanMoveCards( lastCard.thisStack.control, f ) ) {
+						if( useBoard.autoPlayFoundation ) {
+							lastCard.thisStack.control.DoMoveCards( f );
+							return;
+						} else
+							couldPlayLast = true;
+						//console.log( "Played from discard to foundation...." );
+					} 
+				}
+				for( let f of tableau ) {
+					if( card_stack_control.CanMoveCards( lastCard.thisStack.control, f ) ) {
+						if( useBoard.autoPlayTableau ) {
+							lastCard.thisStack.control.DoMoveCards( f );
+							return;
+						} else
+							couldPlayLast = true;
+						return;
+					} 
+				}
 		}
 
 
-		if( lastCard.thisStack.name.startsWith("BoardPile") ) {
+		if( lastCard && lastCard.thisStack.name.startsWith("BoardPile") ) {
 			//console.log( "BoardPile.... card landed" );
 			if( lastCard.me.ref !== lastCard.thisStack ) return; // wait until the top card drops
 
@@ -155,17 +170,20 @@ export function setup( parent, options ) {
 					for( let f of foundations ) {
 						const cs = lastCard.thisStack;
 						if( card_stack_control.CanMoveCards( cs.control, f ) ) {
-							cs.control.DoMoveCards( f );
-							if( cs.top ) {
-								if( cs.top.flags.bFaceDown && !cs.top.flags.bFloating ) {
-									const turned = cs.turnTopCard();
-									dragControl.addTurn( turned, 0, 0.125 );
-								}
-								//console.log( "Turn top card(2)")
-								card_stack_control.update( lastCard.thisStack.control );
-							}	
+							if( useBoard.autoPlayFoundation ) {
+								cs.control.DoMoveCards( f );
+								if( cs.top ) {
+									if( cs.top.flags.bFaceDown && !cs.top.flags.bFloating ) {
+										const turned = cs.turnTopCard();
+										dragControl.addTurn( turned, 0, 0.125 );
+									}
+									//console.log( "Turn top card(2)")
+									card_stack_control.update( lastCard.thisStack.control );
+									return;
+								}	
+							} else
+								couldPlayLast = true;
 							//console.log( "Played to foundation...." );
-							return;
 						} 
 					}
 		
@@ -180,52 +198,55 @@ export function setup( parent, options ) {
 							
 						}
 						if( card_stack_control.CanMoveCards( cs.control, f ) ) {
-							cs.control.DoMoveCards( f );
-							if( cs.top ) {
-								if( cs.top.flags.bFaceDown  && !cs.top.flags.bFloating ) {
-									const turned = cs.turnTopCard();
-									dragControl.addTurn( turned, 0, 0.125 );
+							if( useBoard.autoPlayTableau ) {
+								cs.control.DoMoveCards( f );
+								if( cs.top ) {
+									if( cs.top.flags.bFaceDown  && !cs.top.flags.bFloating ) {
+										const turned = cs.turnTopCard();
+										dragControl.addTurn( turned, 0, 0.125 );
+									}
+									//console.log( "Turn top card(6)")
+									card_stack_control.update( lastCard.thisStack.control );
+									return;
 								}
-								//console.log( "Turn top card(6)")
-								card_stack_control.update( lastCard.thisStack.control );
-							}	
+							} else
+								couldPlayLast = true;
 
 							//console.log( "Played to foundation...." );
-							return;
 						} 
 					}
 				}
 			}
 		}
 
-		if( lastCard.thisStack.name.startsWith("AcePile") ) {
-
+		if( lastCard && lastCard.thisStack.name.startsWith("AcePile") ) {
 			for( let t of tableau ) {
 				t.SelectCards( 1, true );
-				
 				// while it is selected, maybe it was uncovered by this move, and can go somewhere else?
-				for( let f of foundations ) {
-				
+				const f = lastCard.thisStack.control;//for( let f of foundations ) 
+				{
 					if( card_stack_control.CanMoveCards( t, f ) ) {
-						t.DoMoveCards( f );
-						if( t.stack.top ) {
-							if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating ) {
-								const turned = t.stack.turnTopCard();
-								dragControl.addTurn( turned, 0, 0.125 );
+						if( useBoard.autoPlayFoundation ) {
+							t.DoMoveCards( f );
+							if( t.stack.top ) {
+								if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating ) {
+									const turned = t.stack.turnTopCard();
+									dragControl.addTurn( turned, 0, 0.125 );
+								}
+								//console.log( "Turn top card(3)")
+								card_stack_control.update( t );
+								return;
 							}
-							//console.log( "Turn top card(3)")
-							card_stack_control.update( t );
-						}	
-						//console.log( "Played to foundation...." );
-						return;
+						} else {
+							couldPlay = true;
+						}
 					} 
 				}
-
 			}
 		}
 
 		for( let t of tableau ) {
-			if( t === lastCard.thisStack ) continue;
+			if( lastCard && t === lastCard.thisStack ) continue;
 			let found = false;
 			const top = t.stack.top;
 			if( !top) continue; // nothing to play in this stack...
@@ -235,41 +256,48 @@ export function setup( parent, options ) {
 					// only move the last card from table to foundation
 					for( let f of foundations ) {
 						if( card_stack_control.CanMoveCards( t, f ) ) {
-							lastCard.thisStack.control.DoMoveCards( f );
-							if( t.stack.top ) {
-								if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating ) {
-									const turned = t.stack.turnTopCard();
-									dragControl.addTurn( turned, 0, 0.125 );
-								}
-								//console.log( "Turn top card(4)")
-								card_stack_control.update( t );
-							}	
-							//console.log( "Played to foundation...." );
-							return;
+							if( useBoard.autoPlayFoundation ) {
+								t.DoMoveCards( f );
+								if( t.stack.top ) {
+									if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating ) {
+										const turned = t.stack.turnTopCard();
+										dragControl.addTurn( turned, 0, 0.125 );
+									}
+									//console.log( "Turn top card(4)")
+									card_stack_control.update( t );
+								}	
+								//console.log( "Played to foundation...." );
+								return;
+							} else 
+								couldPlay = true;
 						} 
 					}
 				}
 				const card = t.stack.getNthCard( t.active.nCardsSelected -1 );
 
 				if( card && ( !card.next || card.next.flags.bFaceDown ) ){
-					for( let f of tableau ) {
-						if( f === t ) continue;
-						if( card_stack_control.CanMoveCards( t, f ) ) {
-							if( !card.next && !f.stack.top ) continue;
-							t.DoMoveCards( f );
-							if( t.stack.top ) {
-								if( t.stack.top.flags.bFaceDown&& !t.stack.top.flags.bFloating ) {
-									const turned = t.stack.turnTopCard();
-									dragControl.addTurn( turned, 0, 0.125 );
+						for( let f of tableau ) {
+							if( f === t ) continue;
+							if( card_stack_control.CanMoveCards( t, f ) ) {
+								if( !card.next && !f.stack.top ) continue;
+								if( useBoard.autoPlayTableau ) {
+									t.DoMoveCards( f );
+									if( t.stack.top ) {
+										if( t.stack.top.flags.bFaceDown&& !t.stack.top.flags.bFloating ) {
+											const turned = t.stack.turnTopCard();
+											dragControl.addTurn( turned, 0, 0.125 );
+										}
+										//console.log( "Turn top card(5)")
+										card_stack_control.update( t );
+									}	
+									//console.log( "Played to tableau (from tableau)...." );
+								} else {
+									couldPlay = true;
 								}
-								//console.log( "Turn top card(5)")
-								card_stack_control.update( t );
-							}	
-							//console.log( "Played to tableau (from tableau)...." );
-							found = true;
-							break;
-						} 
-					}
+								found = true;
+								break;
+							} 
+						}
 				}
 				if( found ) break;
 			}
@@ -277,72 +305,74 @@ export function setup( parent, options ) {
 
 		{
 			const t = discard;
-			if( t !== lastCard.thisStack ) {
+			if( lastCard && t !== lastCard.thisStack ) {
 				if( t.SelectCards( 1, true ) ) {
 					if( !t.stack.top.flags.bFloating && (!drawPile.stack.top || !drawPile.stack.top.flags.bFloating ) ) {
 						{
 							// only move the last card from table to foundation
-							for( let f of foundations ) {
-								if( card_stack_control.CanMoveCards( t, f ) ) {
-									lastCard.thisStack.control.DoMoveCards( f );
-									if( t.stack.top ) {
-										if( t.stack.top.flags.bFaceDown&& !t.stack.top.flags.bFloating ) {
-											const turned = t.stack.turnTopCard();
-											dragControl.addTurn( turned, 0, 0.125 );
+								for( let f of foundations ) {
+									if( card_stack_control.CanMoveCards( t, f ) ) {
+										if( useBoard.autoPlayFoundation ) {
+											t.DoMoveCards( f );
+											if( t.stack.top ) {
+												if( t.stack.top.flags.bFaceDown&& !t.stack.top.flags.bFloating ) {
+													const turned = t.stack.turnTopCard();
+													dragControl.addTurn( turned, 0, 0.125 );
+												}
+												card_stack_control.update( t );
+											}	
+											return;
+										}else {
+											couldPlay = true;
 										}
-										card_stack_control.update( t );
-									}	
-									return;
-								} 
-							}
+									} 
+								}
 						}
 						const card = t.stack.getNthCard( t.active.nCardsSelected -1 );
 
 						if( card ){
-							for( let f of tableau ) {
-								if( f === t ) continue;
-								if( card_stack_control.CanMoveCards( t, f ) ) {
-									if( !card.next && !f.stack.top ) continue;
-									t.DoMoveCards( f );
-									if( t.stack.top ) {
-										if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating) {
-											const turned = t.stack.turnTopCard();
-											dragControl.addTurn( turned, 0, 0.125 );
+								for( let f of tableau ) {
+									if( f === t ) continue;
+									if( card_stack_control.CanMoveCards( t, f ) ) {
+										if( !card.next && !f.stack.top ) continue;
+										if( useBoard.autoPlayTableau ) {
+											t.DoMoveCards( f );
+											if( t.stack.top ) {
+												if( t.stack.top.flags.bFaceDown && !t.stack.top.flags.bFloating) {
+													const turned = t.stack.turnTopCard();
+													dragControl.addTurn( turned, 0, 0.125 );
+												}
+												//console.log( "Turn top card(5)")
+												card_stack_control.update( t );
+											}	
+											return;
+										}else {
+											couldPlay = true;
 										}
-										//console.log( "Turn top card(5)")
-										card_stack_control.update( t );
-									}	
-									return;
-								} 
-							}
+									} 
+								}
 						}
 					}
 				} else {
 
 				}
 
-				if( options.fullAuto )
+				if( options.fullAuto && !couldPlay && !couldPlayLast )
 					if( wasFloat ) {
-						if(  drawPile.stack.top && 
+						if( drawPile.stack.top && 
 								!discard.stack.top?.flags.bFloating && 
-								!drawPile.stack.top?.flags.bFloating) {
-									//console.log( "Flip the draw card..." );
-
+								!drawPile.stack.top?.flags.bFloating
+							) {
 									if( drawPile.flags.bTurn3ToDiscard ) {
 										for( let n = 0; n < 3; n++ ) {
 											const turned = drawPile.stack.turnTopCard();
-											console.log( "Truend:", turned.name );
+											//console.log( "turned:", turned.name );
 											dragControl.addTurn( turned, 0, 0.25 );
-				
-											//const stack_to = stack.#deck.getStack("Discard")
-											//card_stack.transfer( stack_to, 1 );
 										}
 									} else {
 										const turned = drawPile.stack.turnTopCard();
 										dragControl.addTurn( turned, 0, 0.25 );
 										// update?
-										//const stack_to = stack.#deck.getStack("Discard")
-										//card_stack.transfer( stack_to, 1 );
 									}
 						}
 					}
@@ -439,33 +469,6 @@ export function setup( parent, options ) {
 					}
 				}
 			} 
-
-			if( options.fullAuto )
-				if( wasFloat ) {
-					if(  drawPile.stack.top && 
-							!discard.stack.top?.flags.bFloating && 
-							!drawPile.stack.top?.flags.bFloating) {
-								//console.log( "Flip the draw card..." );
-
-								if( drawPile.flags.bTurn3ToDiscard ) {
-									for( let n = 0; n < 3; n++ ) {
-										const turned = drawPile.stack.turnTopCard();
-										console.log( "Truend:", turned.name );
-										dragControl.addTurn( turned, 0, 0.25 );
-			
-										//const stack_to = stack.#deck.getStack("Discard")
-										//card_stack.transfer( stack_to, 1 );
-									}
-								} else {
-									const turned = drawPile.stack.turnTopCard();
-									dragControl.addTurn( turned, 0, 0.25 );
-									// update?
-									//const stack_to = stack.#deck.getStack("Discard")
-									//card_stack.transfer( stack_to, 1 );
-								}
-					}
-				}
-
 		}
 		return moves;
 	}

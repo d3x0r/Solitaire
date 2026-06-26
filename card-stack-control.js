@@ -181,6 +181,7 @@ export class card_stack_control {
 	py               = 0;
 
 	frame            = document.createElement( "div" );
+	parent           = null;
 	canvas           = document.createElement( "canvas" );
 	offsetLeft       = 0;
 	offsetTop        = 0;
@@ -287,8 +288,11 @@ export class card_stack_control {
 						const n = popups.simpleNotice(
 						     "LOSE", "You have Lost, New Game?"
 						     , () => { this.#deck.on( "lose", true ); }
-						     , null /*()=>{}*/, {} );
+						     , null /*()=>{}*/, { parent: this.parent } );
+						n.useMouse = false;
 						n.show();
+						n.left = 0;
+						n.top = 0;
 						console.log( "LOSE!" );
 					}
 				} else if( this.flags.bTurnToDiscard ) {
@@ -296,8 +300,11 @@ export class card_stack_control {
 						const n = popups.simpleNotice(
 						     "LOSE", "You have Lost, New Game?"
 						     , () => { this.#deck.on( "lose", true ); }
-						     , null /* ()=>{}*/, {} );
+						     , null /* ()=>{}*/, { parent: this.parent } );
+						n.useMouse = false;
 						n.show();
+						n.left = 0;
+						n.top = 0;
 						console.log( "LOSE!" );
 					}
 				}
@@ -702,8 +709,16 @@ export class card_stack_control {
 	append( parent ) {
 		this.frame.className  = "card-stack";
 		this.canvas.className = "card-stack-canvas";
-		parent.appendChild( this.canvas );
+		if( this.deck_stack.startsWith( "Ace" ) ) {
+			this.canvas.className = "card-stack-canvas acePile";
+		} else if (this.deck_stack.startsWith( "Discard" ) ) {
+			this.canvas.className = "card-stack-canvas discardPile";
+		} else if (this.deck_stack.startsWith( "Draw" ) ) {
+			this.canvas.className = "card-stack-canvas drawPile";
+		}
 
+		parent.appendChild( this.canvas );
+		this.parent = parent;
 		this.canvas.style.position        = "absolute";
 		this.canvas.style.left            = this.x + "%";
 		this.canvas.style.top             = this.y + "%";

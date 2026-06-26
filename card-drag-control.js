@@ -229,7 +229,8 @@ export class card_drag_control extends Events {
 	}
 
 	touchUpdate() {
-		msg.textContent = "touches: " + this.touches.length;
+		// msg.textContent = "touches: " + this.touches.length;
+		console.log("touches: " + this.touches.length);
 		if( this.touches.length == 1 ) {
 			var t = this.touches[ 0 ];
 			if( t.new ) {

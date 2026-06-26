@@ -1,4 +1,7 @@
-
+body {
+	/*background-color: rgb(0,48,0);*/
+	background-image: url('images/solitaire_bg.png');
+}
 .card-drag-frame {
 	position: absolute;
 	z-index: 1;
@@ -15,10 +18,13 @@
 
 .game-board {
 	position:relative;
-	left:10vw;
-	top:2vh;
-	width:80vw;
-	height:80vh;
+	left: 0;
+	top: 0;
+	height: 92vh;
+	/*left:10vw;
+	top:2vh;*/
+	width:97vw;
+	/*height:80vh;*/
 }
 
 .card-drag-control{
@@ -30,5 +36,67 @@
 	left:0;
   }
 
+.manual, .auto {
+	display: flex;
+}
 
-  
+
+.control-bar {
+	width: 9vw;
+	position: absolute;
+	top: 1vw;
+	right: 0;
+	z-index: 9999;
+}
+ 
+.control-bar-break {
+	margin-bottom: 22vh;
+}
+
+.acePile, .discardPile, .drawPile {
+	background-color: grey !important;
+	border-radius: 5%;
+}
+
+.display-credits, .display-winnings, .display-total, .display-bet {
+	width: 100px;
+	height: 40px;
+	margin-bottom: 2vh;
+	background-size: cover;
+}
+
+.display-credits {
+	background-image: url("images/buttons/display_credits.png");
+}
+
+.display-winnings {
+	background-image: url("images/buttons/display_amount.png");
+}
+
+.display-total {
+	background-image: url("images/buttons/display_totalbet.png");
+}
+
+.display-bet {
+	background-image: url("images/buttons/display_bet.png");
+}
+
+.bet-button, .max-button, .buy-button {
+	width: 100px;
+	margin-bottom: 2vh;
+}
+
+.frameContainer-notice {
+	width:100%;
+	height:100%;
+	left:0;
+	top:0;
+
+}
+
+.frameContent-notice {
+	width: -webkit-fill-available;
+	height:43%;
+	padding-top :25%;
+
+}
